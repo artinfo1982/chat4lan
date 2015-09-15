@@ -7,6 +7,7 @@ SERVER_IP = ""
 SERVER_PORT = ""
 USERNAME = ""
 
+# 初始登录对话框，暂不考虑密码鉴权
 class Login_Frame(wx.Frame):
 
     server_ip_edit = None
@@ -40,17 +41,13 @@ class Login_Frame(wx.Frame):
         self.username_edit = wx.TextCtrl(login_panel, pos=(130, 110))
         self.username_edit.SetInsertionPoint(0)
 
-        login_confirm_button = wx.Button(login_panel,
-                                         label=u'登录',
-                                         pos=(50, 170))
-
-        login_cancel_button = wx.Button(login_panel,
-                                        label=u'取消',
-                                        pos=(165, 170))
+        login_confirm_button = wx.Button(login_panel, label=u'登录', pos=(50, 170))
+        login_cancel_button = wx.Button(login_panel, label=u'取消', pos=(165, 170))
 
         # 绑定按钮事件响应函数
         self.Bind(wx.EVT_BUTTON, self.OnLogin, login_confirm_button)
         self.Bind(wx.EVT_BUTTON, self.OnCancel, login_cancel_button)
+        pass
 
     def OnLogin(self, event):
         # 将服务器信息和用户信息存入全局变量
