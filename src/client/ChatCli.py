@@ -104,4 +104,3 @@ if __name__ == '__main__':
     login_frame.Centre()
     login_frame.Show()
     app.MainLoop()
-    print SERVER_IP
