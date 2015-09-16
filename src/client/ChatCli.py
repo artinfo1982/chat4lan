@@ -4,10 +4,10 @@
 import wx
 
 # 全局变量定义区
-SERVER_IP = None
-SERVER_PORT = None
-USERNAME = None
-PASSWORD = None
+SERVER_IP = ""
+SERVER_PORT = ""
+USERNAME = ""
+PASSWORD = ""
 FLAG_LOGIN = '\x01'
 FLAG_REGISTER = '\x02'
 
@@ -140,7 +140,7 @@ class Login_Frame(wx.Frame):
         PASSWORD = self.password_edit.GetValue()
 
         # 对登录界面产生的参数进行非空判断
-        if "" == SERVER_IP or "" == SERVER_PORT or "" == USERNAME:
+        if "" == SERVER_IP or "" == SERVER_PORT or "" == USERNAME or "" == PASSWORD:
             dialog = Dialog(None, u"错误", u"参数不能为空", 200, 150, 60, 60)
             dialog.Centre()
             dialog.Show()
