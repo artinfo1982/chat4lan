@@ -80,7 +80,7 @@ class Dialog(wx.Frame):
         pass
 
 
-# 初始登录对话框，暂不考虑密码鉴权
+# 初始登录对话框
 class Login_Frame(wx.Frame):
 
     server_ip_edit = None
