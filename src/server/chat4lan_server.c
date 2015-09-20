@@ -10,6 +10,68 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
+
+/*
+* register:
+* client --> (flag[1], username_len[1], password_len[1], username[?], password[?])
+* server --> (flag[1], userid[1] or space[1])
+*
+* login:
+* client --> (flag[1], password_len[1], userid[1], password[?])
+* server --> (flag[1], list_size[1], list[?])
+*/
+
+#define MAX_USER_NUMBER 		100
+// general space use to fill message body
+#define GENERAL_SPACE			"\x00"	// 0000 0000
+// login success
+#define SVR_RSP_LON_SUC 			"\x01"	// 0000 0001
+// register success
+#define SVR_RSP_REG_SUC 			"\x02"	// 0000 0010
+// register users more than max user number
+#define SVR_RSP_REG_ERR_MAX_USR "\x81"	// 1000 0001
+// the same user register twice
+#define SVR_RSP_REG_ERR_REP		"\x82"	// 1000 0010	
+// authentication failed
+#define SVR_RSP_LON_ERR_REP		"\x83"	// 1000 0011
+// user not in memory database
+#define SVR_RSP_LON_ERR_NOT_EXI	"\x84"	// 1000 0100
+
+typedef struct _user_info
+{
+	int userid;
+	char username[CHAR_MAX];
+	char password[CHAR_MAX];
+	char friend_list[CHAR_MAX];
+}user_info;
+
+//global user id, start from 0
+int g_user_id;
+int g_real_user_num;
+user_info ui[MAX_USER_NUMBER];
+
+int authentication(int userid, char * input_pass)
+{
+	int result = 0, i, flag = 0;
+	// query userid from memory database
+	for (i = 0; i < g_real_user_num; i++)
+	{
+		// found user in memory databases
+		if (userid == ui[i].userid)
+		{
+			flag = 1;
+			// check password
+			if (0 == strcmp(input_pass, ui[i].password))
+				return 0;
+			else
+				return -1;
+		}			
+	}
+	// can not find user in memory database
+	if (0 == flag)
+		return 1;
+}
 
 int main(int argc,char *argv[])
 {
@@ -46,11 +108,6 @@ int main(int argc,char *argv[])
 		printf("dup2 STDIN_FILENO failed\n");
 		exit(1);
 	}
-	if (dup2(fd, STDOUT_FILENO) == -1)
-	{
-		printf("dup2 STDOUT_FILENO failed\n");
-		exit(1);
-	}
 	if (dup2(fd, STDERR_FILENO) == -1)
 	{
 		printf("dup2 STDERR_FILENO failed\n");
@@ -59,7 +116,7 @@ int main(int argc,char *argv[])
 	close(fd);
 
 	int sfd, cfd, efd, flag, rep, nfds, i;
-	char buffer[8192];
+	char buffer[8192], data[64];
     	struct epoll_event sev,cev, events[256];
 	struct sockaddr_in servAddr;
 	struct sockaddr_in cliAddr;
@@ -69,8 +126,27 @@ int main(int argc,char *argv[])
 	socklen_t addrlen = sizeof(cliAddr);
     	servAddr.sin_family = AF_INET;
     	servAddr.sin_addr.s_addr = inet_addr(argv[1]);
-    	servAddr.sin_port = htons((unsigned short)atoi(argv[2]));
+    	servAddr.sin_port = htons((unsigned short)atoi(argv[2]));	
 
+	int username_len, userid_len, password_len;
+	char username[CHAR_MAX], password[CHAR_MAX];
+	int userid;
+
+	g_user_id = 2;
+	memset(&ui, 0x0, sizeof(ui));
+
+	// to be delete
+	ui[0].userid = 0;
+	strncpy(ui[0].username, "AAA", 3);
+	strncpy(ui[0].password, "aaa", 3);
+	ui[0].friend_list[0] = (char)'1';
+	ui[0].friend_list[1] = (char)'2';
+	ui[1].userid = 1;
+	strncpy(ui[1].username, "BBB", 3);
+	strncpy(ui[1].password, "bbb", 3);
+	ui[1].friend_list[0] = (char)'0';
+	ui[1].friend_list[1] = (char)'2';
+	
 	if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		printf("socket create failed\n");
@@ -125,19 +201,88 @@ int main(int argc,char *argv[])
 			{
 				if ((cfd = accept(sfd,(struct sockaddr *)&cliAddr, &addrlen)) < 0)
 				{
-					printf("acept failed\n");
+					printf("accept failed\n");
 					continue;
 				}
 				memset(buffer, 0x0, sizeof(buffer));
+				memset(data, 0x0, sizeof(data));
 				if (recv(cfd, buffer, 8192, 0) < 0)
 				{
 					printf("recv failed\n");
 					close(cfd);
 					continue;
 				}
-				if (0x01 == buffer[0])
+				switch (buffer[0])
 				{
-					send(cfd, "AAA", 3, 0);
+					//login
+					case 0x01:
+						password_len = (int)buffer[1];
+						memset(password, 0x0, sizeof(password));
+						userid = (int)buffer[2];
+						strncpy(password, buffer + 3 + userid_len, password_len);				
+						password[password_len] = '\0';
+						// user not found in memory dataspace
+						if (authentication(userid, password) > 0)
+						{
+							sprintf(data, "%s%s", SVR_RSP_LON_ERR_NOT_EXI, GENERAL_SPACE);
+							send(cfd, data, 2, 0);
+							break;
+						}
+						// authentication failed
+						else if (authentication(userid, password) < 0)
+						{
+							sprintf(data, "%s%s", SVR_RSP_LON_ERR_REP, GENERAL_SPACE);
+							send(cfd, data, 2, 0);
+							break;
+						}
+						else
+						{
+							// list
+							sprintf(data, "%s%s", SVR_RSP_LON_SUC, GENERAL_SPACE);
+							send(cfd, data, 2, 0);
+							break;
+						}
+						break;
+					//register
+					case 0x02:
+						if (g_user_id > MAX_USER_NUMBER)
+						{
+							sprintf(data, "%s%s", SVR_RSP_REG_ERR_MAX_USR, GENERAL_SPACE);
+							send(cfd, data, 2, 0);
+							break;
+						}
+						ui[g_user_id].userid = g_user_id;
+						username_len = (int)buffer[1];
+						password_len = (int)buffer[2];
+						memset(username, 0x0, sizeof(username));
+						strncpy(username, buffer + 3, username_len);
+						username[username_len] = '\0';				
+						flag = 0;
+						for (i = 0; i <= g_user_id; i++)
+						{
+							if (0 == strcmp(username, ui[i].username))
+							{
+								flag = 1;
+								break;
+							}
+						}
+						if (1 == flag)
+						{
+							sprintf(data, "%s%s", SVR_RSP_REG_ERR_REP, GENERAL_SPACE);
+							send(cfd, SVR_RSP_REG_ERR_REP, 2, 0);
+							break;
+						}
+						strncpy(ui[g_user_id].username, buffer + 3, username_len);
+						ui[g_user_id].username[username_len] = '\0';
+						strncpy(ui[g_user_id].password, buffer + 3 + username_len, password_len);				
+						ui[g_user_id].password[password_len] = '\0';
+						sprintf(data, "%s%c", SVR_RSP_REG_SUC, ui[g_user_id].userid);
+						send(cfd, data, strlen(data), 0);
+						g_user_id++;
+						g_real_user_num = g_user_id;
+						break;
+					default:
+						break;
 				}
 			}
 			close(cfd);
