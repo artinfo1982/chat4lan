@@ -2,7 +2,6 @@
 # encoding=utf-8
 
 import wx
-import struct
 import socket
 import Tools
 import Dialog
@@ -82,21 +81,21 @@ class Login(wx.Frame):
             dialog.Centre()
             dialog.Show()
         # 校验输入的服务器端口是否为整数
-        elif not Tools.portChecker():
+        elif not Tools.portChecker(SERVER_PORT):
             dialog = Dialog.Dialog(None, u"错误", u"端口不合法", 200, 150, 60, 60)
             dialog.Centre()
             dialog.Show()
         # 校验输入的用户ID是否为整数
-        elif not Tools.idChecker():
+        elif not Tools.idChecker(USERID):
             dialog = Dialog.Dialog(None, u"错误", u"用户ID不合法", 200, 150, 60, 60)
             dialog.Centre()
             dialog.Show()
         else:
-            send_data = struct.pack("!ccc%ds" % len(password.encode('utf-8')),
-                                    Constant.LON_REQ_SUC_RSP,
-                                    chr(len(password.encode('utf-8'))),
-                                    chr(USERID.encode('utf-8')),
-                                    password.encode('utf-8'))
+            send_data = Constant.LON_REQ_SUC_RSP + \
+                chr(len(str(USERID))) + \
+                chr(len(password.encode('utf-8'))) + \
+                str(USERID) + \
+                password.encode('utf-8')
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect((SERVER_IP, int(SERVER_PORT)))
@@ -112,18 +111,22 @@ class Login(wx.Frame):
             self.Close()
 
             if self.isSuccess:
-                msg = struct.unpack("cc", rsp)[0]
-                if Constant.SVR_RSP_REG_ERR_MAX_USR == msg:
-                    dialog = Dialog.Dialog(None, u"错误", u"注册的用户数已经满员", 200, 150, 30, 60)
+                if Constant.SVR_RSP_LON_ERR_REP == rsp[0]:
+                    dialog = Dialog.Dialog(None, u"错误", u"鉴权失败", 200, 150, 30, 60)
                     dialog.Centre()
                     dialog.Show()
-                elif Constant.SVR_RSP_REG_ERR_REP == msg:
-                    dialog = Dialog.Dialog(None, u"错误", u"该用户已注册", 200, 150, 30, 60)
+                elif Constant.SVR_RSP_LON_ERR_NOT_EXI == rsp[0]:
+                    dialog = Dialog.Dialog(None, u"错误", u"用户不存在", 200, 150, 30, 60)
                     dialog.Centre()
                     dialog.Show()
-            person_list_frame = FriendList.FriendList(None)
-            person_list_frame.Centre()
-            person_list_frame.Show()
+                elif Constant.LON_REQ_SUC_RSP == rsp[0]:
+                    friend_list = FriendList.FriendList(None)
+                    friend_list.Centre()
+                    friend_list.Show()
+                else:
+                    dialog = Dialog.Dialog(None, u"错误", u"登录收到无效响应", 200, 150, 30, 60)
+                    dialog.Centre()
+                    dialog.Show()
 
     def OnRegister(self, event):
         register_frame = Register.Register(None)
