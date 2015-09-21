@@ -22,19 +22,19 @@
 * server --> (flag[1], list_size[1], list[?] or flag[1] when error happens)
 */
 
-#define MAX_USER_NUMBER 		100
+#define MAX_USER_NUMBER 			100
 // login success
 #define SVR_RSP_LON_SUC 			"\x01"	// 0000 0001
 // register success
 #define SVR_RSP_REG_SUC 			"\x02"	// 0000 0010
 // register users more than max user number
-#define SVR_RSP_REG_ERR_MAX_USR "\x81"	// 1000 0001
+#define SVR_RSP_REG_ERR_MAX_USR 		"\x81"	// 1000 0001
 // the same user register twice
-#define SVR_RSP_REG_ERR_REP		"\x82"	// 1000 0010	
+#define SVR_RSP_REG_ERR_REP			"\x82"	// 1000 0010	
 // authentication failed
-#define SVR_RSP_LON_ERR_REP		"\x83"	// 1000 0011
+#define SVR_RSP_LON_ERR_REP			"\x83"	// 1000 0011
 // user not in memory database
-#define SVR_RSP_LON_ERR_NOT_EXI	"\x84"	// 1000 0100
+#define SVR_RSP_LON_ERR_NOT_EXI			"\x84"	// 1000 0100
 
 typedef struct _user_info
 {
