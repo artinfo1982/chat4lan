@@ -15,16 +15,14 @@
 /*
 * register:
 * client --> (flag[1], username_len[1], password_len[1], username[?], password[?])
-* server --> (flag[1], userid[1] or space[1])
+* server --> (flag[1], userid[1] or only flag[1] when error happens)
 *
 * login:
-* client --> (flag[1], password_len[1], userid[1], password[?])
-* server --> (flag[1], list_size[1], list[?])
+* client --> (flag[1], userid_len[1], password_len[1], userid[?], password[?])
+* server --> (flag[1], list_size[1], list[?] or flag[1] when error happens)
 */
 
 #define MAX_USER_NUMBER 		100
-// general space use to fill message body
-#define GENERAL_SPACE			"\x00"	// 0000 0000
 // login success
 #define SVR_RSP_LON_SUC 			"\x01"	// 0000 0001
 // register success
@@ -40,10 +38,10 @@
 
 typedef struct _user_info
 {
-	int userid;
+	int 	userid;
 	char username[CHAR_MAX];
 	char password[CHAR_MAX];
-	char friend_list[CHAR_MAX];
+	int 	friend_list[MAX_USER_NUMBER];
 }user_info;
 
 //global user id, start from 0
@@ -129,23 +127,11 @@ int main(int argc,char *argv[])
     	servAddr.sin_port = htons((unsigned short)atoi(argv[2]));	
 
 	int username_len, userid_len, password_len;
-	char username[CHAR_MAX], password[CHAR_MAX];
+	char username[CHAR_MAX], password[CHAR_MAX], str_userid[CHAR_MAX];
 	int userid;
 
-	g_user_id = 2;
+	g_user_id = 0;
 	memset(&ui, 0x0, sizeof(ui));
-
-	// to be delete
-	ui[0].userid = 0;
-	strncpy(ui[0].username, "AAA", 3);
-	strncpy(ui[0].password, "aaa", 3);
-	ui[0].friend_list[0] = (char)'1';
-	ui[0].friend_list[1] = (char)'2';
-	ui[1].userid = 1;
-	strncpy(ui[1].username, "BBB", 3);
-	strncpy(ui[1].password, "bbb", 3);
-	ui[1].friend_list[0] = (char)'0';
-	ui[1].friend_list[1] = (char)'2';
 	
 	if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
@@ -216,30 +202,35 @@ int main(int argc,char *argv[])
 				{
 					//login
 					case 0x01:
-						password_len = (int)buffer[1];
+						userid_len = (int)buffer[1];
+						password_len = (int)buffer[2];
+						memset(str_userid, 0x0, sizeof(str_userid));
 						memset(password, 0x0, sizeof(password));
-						userid = (int)buffer[2];
-						strncpy(password, buffer + 3 + userid_len, password_len);				
+						strncpy(str_userid, buffer + 3, userid_len);
+						strncpy(password, buffer + 3 + userid_len, password_len);
+						str_userid[userid_len] = '\0';
 						password[password_len] = '\0';
+						userid = atoi(str_userid);
+						
 						// user not found in memory dataspace
 						if (authentication(userid, password) > 0)
 						{
-							sprintf(data, "%s%s", SVR_RSP_LON_ERR_NOT_EXI, GENERAL_SPACE);
-							send(cfd, data, 2, 0);
+							sprintf(data, "%s", SVR_RSP_LON_ERR_NOT_EXI);
+							send(cfd, data, 1, 0);
 							break;
 						}
 						// authentication failed
 						else if (authentication(userid, password) < 0)
 						{
-							sprintf(data, "%s%s", SVR_RSP_LON_ERR_REP, GENERAL_SPACE);
-							send(cfd, data, 2, 0);
+							sprintf(data, "%s", SVR_RSP_LON_ERR_REP);
+							send(cfd, data, 1, 0);
 							break;
 						}
 						else
 						{
 							// list
-							sprintf(data, "%s%s", SVR_RSP_LON_SUC, GENERAL_SPACE);
-							send(cfd, data, 2, 0);
+							sprintf(data, "%s", SVR_RSP_LON_SUC);
+							send(cfd, data, 1, 0);
 							break;
 						}
 						break;
@@ -247,8 +238,8 @@ int main(int argc,char *argv[])
 					case 0x02:
 						if (g_user_id > MAX_USER_NUMBER)
 						{
-							sprintf(data, "%s%s", SVR_RSP_REG_ERR_MAX_USR, GENERAL_SPACE);
-							send(cfd, data, 2, 0);
+							sprintf(data, "%s", SVR_RSP_REG_ERR_MAX_USR);
+							send(cfd, data, 1, 0);
 							break;
 						}
 						ui[g_user_id].userid = g_user_id;
@@ -268,15 +259,15 @@ int main(int argc,char *argv[])
 						}
 						if (1 == flag)
 						{
-							sprintf(data, "%s%s", SVR_RSP_REG_ERR_REP, GENERAL_SPACE);
-							send(cfd, SVR_RSP_REG_ERR_REP, 2, 0);
+							sprintf(data, "%s", SVR_RSP_REG_ERR_REP);
+							send(cfd, SVR_RSP_REG_ERR_REP, 1, 0);
 							break;
 						}
 						strncpy(ui[g_user_id].username, buffer + 3, username_len);
 						ui[g_user_id].username[username_len] = '\0';
 						strncpy(ui[g_user_id].password, buffer + 3 + username_len, password_len);				
 						ui[g_user_id].password[password_len] = '\0';
-						sprintf(data, "%s%c", SVR_RSP_REG_SUC, ui[g_user_id].userid);
+						sprintf(data, "%s%d", SVR_RSP_REG_SUC, ui[g_user_id].userid);
 						send(cfd, data, strlen(data), 0);
 						g_user_id++;
 						g_real_user_num = g_user_id;
