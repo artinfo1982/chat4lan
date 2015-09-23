@@ -9,6 +9,10 @@ import Constant
 import Register
 import FriendList
 
+SERVER_IP = ""
+SERVER_PORT = ""
+USERID = ""
+
 # 初始登录对话框
 class Login(wx.Frame):
 
