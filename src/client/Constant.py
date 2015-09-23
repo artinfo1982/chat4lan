@@ -1,6 +1,10 @@
 #! /usr/bin/python
 # encoding=utf-8
 
+# friend status:
+FRI_ONLINE = '\x00'
+FRI_OFFLINE = '\xFF'
+
 # login:
 # client login and server response success both use 0000 0001(\x01)
 LON_REQ_SUC_RSP = '\x01'
@@ -16,3 +20,11 @@ REG_REQ_SUC_RSP = '\x02'
 SVR_RSP_REG_ERR_MAX_USR = '\x81'
 # server response when client use same name register twice, 1000 0010(\x82)
 SVR_RSP_REG_ERR_REP = '\x82'
+
+# add friend:
+# client add friend and server response success both use 0000 0011(\x03)
+ADD_FRI_REQ_SUC_RSP = '\x03'
+# server response when client add friend but not exist, 1000 0101(\x85)
+SVR_RSP_ADD_FRI_ERR_NOT_EXI = '\x85'
+# server response when client add friend but already added, 1000 0110(\x86)
+SVR_RSP_ADD_FRI_ERR_AGN = '\x86'
