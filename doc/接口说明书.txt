@@ -7,22 +7,22 @@
 二、接口
 1.注册
 客户端请求：flag(1), username_len(1), password_len(1), username(?), password(?)
-            示例：'\x02', '\x03', '\x06', "abc", "huawei"
+          示例：'\x02', '\x03', '\x06', "abc", "huawei"
 服务器响应：a)成功 flag(1), userid(?)，示例：'\x02', "100"
-            b)失败 flag(1)，示例：'\x81'
+          b)失败 flag(1)，示例：'\x81'
 
 2.登录
 客户端请求：flag(1), userid_len(1), password_len(1), userid(?), password(?)
-            示例：'\x01', '\x03', '\x06', "100", "huawei"
+          示例：'\x01', '\x03', '\x06', "100", "huawei"
 服务器响应：a)成功 flag(1), friNum_len(1), friNum(?), [fri1ID_len(1), fri1ID[?], fri2ID_len(2), fri2ID[?]......]
-              示例：'\x01', '\x02', "2", '\x02', "20", '\x03', "111"
-            b)失败 flag(1)，示例：'\x84'
+            示例：'\x01', '\x02', "2", '\x02', "20", '\x03', "111"
+          b)失败 flag(1)，示例：'\x84'
             
 3.添加好友
 客户端请求：flag(1), selfID_len(1), friendID_len(1), selfID(?), friendID(?)
-            示例：'\x03', '\x2', '\x03', "20", "100"
+          示例：'\x03', '\x2', '\x03', "20", "100"
 服务器响应：a)成功 flag(1)，示例：'\x03'
-            b)失败 flag(1)，示例：'\x85'
+          b)失败 flag(1)，示例：'\x85'
 
 
 
