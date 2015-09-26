@@ -15,6 +15,7 @@ SERVER_PORT = ""
 USERID = ""
 
 FRIEND_NUM = 0
+FRIEND_ID_ARRAY = {}
 FRIEND_NAME_ARRAY = {}
 FRIEND_STATUS_ARRAY = {}
 
@@ -110,14 +111,15 @@ class Login(wx.Frame):
                 password.encode('utf-8')
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
                 sock.connect((SERVER_IP, int(SERVER_PORT)))
                 sock.send(send_data)
                 rsp = sock.recv(1024)
             except Exception, e:
+                self.isSuccess = False
                 dialog = Dialog.Dialog(None, u"错误", e.message, 200, 150, 30, 60)
                 dialog.Centre()
                 dialog.Show()
-                self.isSuccess = False
             finally:
                 sock.close()
             self.Close()
@@ -137,6 +139,10 @@ class Login(wx.Frame):
                     index = ord(rsp[1]) + 2
                     # 逐一解析并填充好友信息到字典数组备用
                     for i in range(0, FRIEND_NUM, 1):
+                        length = ord(rsp[index])
+                        index += 1
+                        FRIEND_ID_ARRAY[i] = rsp[index:(index + length)]
+                        index += length
                         length = ord(rsp[index])
                         index += 1
                         FRIEND_NAME_ARRAY[i] = rsp[index:(index + length)]
