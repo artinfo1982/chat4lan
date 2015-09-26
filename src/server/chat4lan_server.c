@@ -281,14 +281,21 @@ int main(int argc,char *argv[])
 							index += length;
 							for (j = 0; j < ui[userID].friend_num; j++)
 							{
-								// get friend name by userid
+								// get friend userid
+								snprintf(login_tmp, CHAR_MAX, "%d", ui[(ui[userID].friend_list[j])].userid);
+								length = strlen(login_tmp);
+								data[index - data] = length;
+								index ++;
+								memcpy(index, login_tmp, length);
+								index += length;
+								// get friend name
 								snprintf(login_tmp, CHAR_MAX, "%s", ui[(ui[userID].friend_list[j])].username);
 								length = strlen(login_tmp);
 								data[index - data] = length;
 								index ++;
 								memcpy(index, login_tmp, length);
 								index += length;
-								// get friend status by userid
+								// get friend status
 								data[index - data] = ui[(ui[userID].friend_list[j])].user_status;
 								index ++;
 							}
