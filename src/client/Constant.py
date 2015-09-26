@@ -2,7 +2,7 @@
 # encoding=utf-8
 
 # friend status:
-FRI_ONLINE = '\x00'
+FRI_ONLINE = '\xF0'
 FRI_OFFLINE = '\xFF'
 
 # login:
