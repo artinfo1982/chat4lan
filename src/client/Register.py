@@ -91,9 +91,10 @@ class Register(wx.Frame):
                 password.encode('utf-8')
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
                 sock.connect((server_ip, int(server_port)))
                 sock.send(send_data)
-                rsp = sock.recv(8)
+                rsp = sock.recv(64)
             except Exception, e:
                 dialog = Dialog.Dialog(None, u"错误", e.message, 200, 150, 30, 60)
                 dialog.Centre()
