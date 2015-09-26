@@ -18,29 +18,37 @@ b)失败 flag(1)，示例：'\x81'
 flag(1), userid_len(1), password_len(1), userid(?), password(?)
 示例：'\x01', '\x03', '\x06', "100", "huawei"
 服务器响应：
-a)成功 flag(1), friNum_len(1), friNum(?), [fri1Name_len(1), fri1Name(?), fri1Status(1), fri2Name_len(1), fri2Name(?), fri2Status(1)......]
-示例：'\x01', '\x01', "2", '\x01', "a", '\xF0', '\x02', "bc", '\xFF'
+a)成功 flag(1), friNum_len(1), friNum(?), [fri1ID_len(1), fri1ID(?), fri1Name_len(1), fri1Name(?), fri1Status(1), fri2ID_len(1), fri2ID(?), fri2Name_len(1), fri2Name(?), fri2Status(1)......]
+示例：'\x01', '\x01', "2", '\x01', "2", '\x01', "a", '\xF0', '\x02', "33", '\x02', "bc", '\xFF'
 b)失败 flag(1)，示例：'\x84'
             
 3.添加好友
-客户端请求：flag(1), selfID_len(1), friendID_len(1), selfID(?), friendID(?)
+客户端请求：
+flag(1), selfID_len(1), friendID_len(1), selfID(?), friendID(?)
 示例：'\x03', '\x02', '\x03', "20", "100"
-服务器响应：a)成功 flag(1)，示例：'\x03'
+服务器响应：
+a)成功 flag(1)，示例：'\x03'
 b)失败 flag(1)，示例：'\x85'
 
+4.点对点单聊
+客户端请求：
+flag(1), selfID_len(1), selfID(?), friendID_len(1), friendID(?), msg_len(1), msg(?)
+示例：'\x04', '\x01', "2", '\x02', "33", '\x06', "huawei"
+服务器响应：
+待定
 
 
 三、附录
 1.自定义协议的FLAG列表
-用户在线                          "\xF0"	// 1111 0000
-用户离线                          "\xFF"	// 1111 1111
 登录请求及登录成功的响应          "\x01"	// 0000 0001
 注册请求及注册成功的响应          "\x02"	// 0000 0010
 添加好友请求及添加成功的响应      "\x03"	// 0000 0011
+收发消息成功                      "\x04"        // 0000 0100
 注册用户数超过预定的最大值        "\x81"	// 1000 0001
 同一个用户名注册两次              "\x82"	// 1000 0010
 鉴权失败                          "\x83"	// 1000 0011
 登录时用户不存在                  "\x84"	// 1000 0100
 添加好友时好友不存在              "\x85"	// 1000 0101
 好友已经被添加了两次              "\x86"	// 1000 0110
-
+用户在线                          "\xF0"	// 1111 0000
+用户离线                          "\xFF"	// 1111 1111
