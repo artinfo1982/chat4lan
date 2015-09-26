@@ -12,42 +12,28 @@
 #include <errno.h>
 #include <limits.h>
 
-/*
-* register:
-* client --> (flag[1], username_len[1], password_len[1], username[?], password[?])
-* server --> (flag[1], userid[?] or only flag[1] when error happens)
-*
-* login:
-* client --> (flag[1], userid_len[1], password_len[1], userid[?], password[?])
-* server --> (flag[1], friend_num[1], {fri1ID_len[1], fri1ID[?], fri2ID_len[1], fri2ID[?]...} or flag[1] when error happens)
-*
-* add friend:
-* client --> (flag[1], selfID_len[1], friendID_len[1], selfID[?], friendID[?])
-* server --> (flag[1])
-*/
-
-#define MAX_USER_NUMBER 			100
+#define MAX_USER_NUMBER 		CHAR_MAX
 // login success
-#define SVR_RSP_LON_SUC 			"\x01"	// 0000 0001
+#define SVR_RSP_LON_SUC 			'\x01'	// 0000 0001
 // register success
-#define SVR_RSP_REG_SUC 			"\x02"	// 0000 0010
+#define SVR_RSP_REG_SUC 				'\x02'	// 0000 0010
 // add friend success
-#define SVR_RSP_ADD_FRI_SUC			"\x03"	// 0000 0011
+#define SVR_RSP_ADD_FRI_SUC			'\x03'	// 0000 0011
 // register users more than max user number
-#define SVR_RSP_REG_ERR_MAX_USR 		"\x81"	// 1000 0001
+#define SVR_RSP_REG_ERR_MAX_USR 	'\x81'	// 1000 0001
 // the same user register twice
-#define SVR_RSP_REG_ERR_REP			"\x82"	// 1000 0010	
+#define SVR_RSP_REG_ERR_REP			'\x82'	// 1000 0010	
 // authentication failed
-#define SVR_RSP_LON_ERR_REP			"\x83"	// 1000 0011
+#define SVR_RSP_LON_ERR_REP			'\x83'	// 1000 0011
 // user not in memory database
-#define SVR_RSP_LON_ERR_NOT_EXI			"\x84"	// 1000 0100
+#define SVR_RSP_LON_ERR_NOT_EXI		'\x84'	// 1000 0100
 // friend not in memory database
-#define SVR_RSP_ADD_FRI_ERR_NOT_EXI		"\x85"	// 1000 0101
+#define SVR_RSP_ADD_FRI_ERR_NOT_EXI	'\x85'	// 1000 0101
 // friend is already added
-#define SVR_RSP_ADD_FRI_ERR_AGN			"\x86"	// 1000 0110
+#define SVR_RSP_ADD_FRI_ERR_AGN		'\x86'	// 1000 0110
 
-#define USER_STATUS_ONLINE			"\x00"	// 0000 0000
-#define USER_STATUS_OFFLINE			"\xFF"	// 1111 1111
+#define USER_STATUS_ONLINE			'\xF0'	// 1111 0000
+#define USER_STATUS_OFFLINE			'\xFF'	// 1111 1111
 
 typedef struct _user_info
 {
@@ -55,14 +41,27 @@ typedef struct _user_info
 	char 	username [CHAR_MAX];
 	char 	password [CHAR_MAX];
 	int		friend_num;
-	int 		friend_list [MAX_USER_NUMBER];
-	char * 	user_status;
+	int		friend_list [MAX_USER_NUMBER];
+	char 	user_status;
 }user_info;
 
 //global user id, start from 0
 int g_user_id;
 int g_real_user_num;
 user_info ui[MAX_USER_NUMBER];
+
+int userid_generator()
+{
+	int userid;
+	if (g_user_id > MAX_USER_NUMBER)
+		return -1;		
+	else
+	{
+		userid = g_user_id ++;
+		g_real_user_num = g_user_id;
+		return userid;
+	}
+}
 
 int authentication(int userid, char * input_pass)
 {
@@ -97,21 +96,27 @@ int add_friend(int selfID, int friendID)
 		{
 			flag = 1;
 			// check if this friendID has already been added
-			for (j = 0; j< ui[i].friend_num; j++)
+			for (j = 0; j< ui[selfID].friend_num; j++)
 			{
 				// this friendID has been added
-				if (friendID == ui[i].friend_list[j])
+				if (friendID == ui[selfID].friend_list[j])
 					return -1;
 			}
 			// add friend to user's friend list
-			ui[i].friend_list[ui[i].friend_num] = friendID;
-			ui[i].friend_num ++;
+			ui[selfID].friend_list[(ui[selfID].friend_num ++)] = friendID;
 			return 0;
 		}			
 	}
 	// can not find friend in memory database
 	if (0 == flag)
 		return 1;
+}
+
+void send_flag_msg(int sock, char flag)
+{
+	char * index = & flag;
+	send(sock, index, 1, 0);
+	close(sock);
 }
 
 int main(int argc,char *argv[])
@@ -156,8 +161,8 @@ int main(int argc,char *argv[])
 	}
 	close(fd);
 
-	int sfd, cfd, efd, flag, rep, nfds, i;
-	char buffer[1024], data[64];
+	int sfd, cfd, efd, flag, rep, nfds, i, j;
+	char buffer[1024], data[1024];
     	struct epoll_event sev,cev, events[256];
 	struct sockaddr_in servAddr;
 	struct sockaddr_in cliAddr;
@@ -171,8 +176,9 @@ int main(int argc,char *argv[])
 
 	int username_len, userid_len, password_len, friendID_len;
 	char username[CHAR_MAX], password[CHAR_MAX], str_userid[CHAR_MAX], str_friendid[CHAR_MAX];
-	char str_friendNum[CHAR_MAX];
-	int userID, friendID;
+	char login_tmp[CHAR_MAX], register_tmp[CHAR_MAX], add_fri_tmp[CHAR_MAX];
+	char * index = NULL;
+	int userID, uid1, uid2, friendID, length;
 
 	g_user_id = 0;
 	memset(&ui, 0x0, sizeof(ui));
@@ -245,53 +251,69 @@ int main(int argc,char *argv[])
 				{
 					//login
 					case 0x01:
-						userid_len = (int)buffer[1];
-						password_len = (int)buffer[2];
-						strncpy(str_userid, buffer + 3, userid_len);
-						strncpy(password, buffer + 3 + userid_len, password_len);
-						str_userid[userid_len] = '\0';
-						password[password_len] = '\0';
-						userID= atoi(str_userid);			
+						// get userid
+						memcpy(login_tmp, buffer + 3, (int)buffer[1]);
+						login_tmp[((int)buffer[1])] = '\0';
+						userID= atoi(login_tmp);
+						// get password
+						memcpy(login_tmp, buffer + 3 + (int)buffer[1], (int)buffer[2]);
+						login_tmp[((int)buffer[2])] = '\0';
 						// user not found in memory dataspace
-						if (authentication(userID, password) > 0)
+						if (authentication(userID, login_tmp) > 0)
 						{
-							sprintf(data, "%s", SVR_RSP_LON_ERR_NOT_EXI);
-							send(cfd, data, 1, 0);
+							send_flag_msg(cfd, SVR_RSP_LON_ERR_NOT_EXI);
 							break;
 						}
 						// authentication failed
-						else if (authentication(userID, password) < 0)
+						else if (authentication(userID, login_tmp) < 0)
 						{
-							sprintf(data, "%s", SVR_RSP_LON_ERR_REP);
-							send(cfd, data, 1, 0);
+							send_flag_msg(cfd, SVR_RSP_LON_ERR_REP);
 							break;
 						}
+						// login success
 						else
 						{
-							ui[g_user_id].user_status = USER_STATUS_ONLINE;
-							sprintf(str_friendNum, "%d", ui[g_user_id].friend_num);
-							sprintf(data, "%s", SVR_RSP_LON_SUC);
-							send(cfd, data, 1, 0);
+							ui[userID].user_status = USER_STATUS_ONLINE;
+							data[0] = SVR_RSP_LON_SUC;
+							snprintf(login_tmp, CHAR_MAX, "%d", ui[userID].friend_num);
+							length = strlen(login_tmp);
+							data[1] = length;
+							index = data + 2;
+							memcpy(index, login_tmp, length);
+							index += length;
+							for (j = 0; j < ui[userID].friend_num; j++)
+							{
+								// get friend name by userid
+								snprintf(login_tmp, CHAR_MAX, "%s", ui[(ui[userID].friend_list[j])].username);
+								length = strlen(login_tmp);
+								data[index - data] = length;
+								index ++;
+								memcpy(index, login_tmp, length);
+								index += length;
+								// get friend status by userid
+								data[index - data] = ui[(ui[userID].friend_list[j])].user_status;
+								index ++;
+							}
+							data[index - data] = '\0';
+							send(cfd, data, strlen(data), 0);
 							break;
 						}
 						break;
 					//register
 					case 0x02:
-						if (g_user_id > MAX_USER_NUMBER)
+						// more than max user
+						if ((uid1 = userid_generator()) < 0)
 						{
-							sprintf(data, "%s", SVR_RSP_REG_ERR_MAX_USR);
-							send(cfd, data, 1, 0);
+							send_flag_msg(cfd, SVR_RSP_REG_ERR_MAX_USR);
 							break;
 						}
-						ui[g_user_id].userid = g_user_id;
-						username_len = (int)buffer[1];
-						password_len = (int)buffer[2];
-						strncpy(username, buffer + 3, username_len);
-						username[username_len] = '\0';				
+						ui[uid1].userid = uid1;
+						memcpy(register_tmp, buffer + 3, (int)buffer[1]);
+						register_tmp[((int)buffer[1])] = '\0';
 						flag = 0;
-						for (i = 0; i <= g_user_id; i++)
+						for (j = 0; j < g_real_user_num; j++)
 						{
-							if (0 == strcmp(username, ui[i].username))
+							if (0 == strcmp(register_tmp, ui[j].username))
 							{
 								flag = 1;
 								break;
@@ -299,54 +321,56 @@ int main(int argc,char *argv[])
 						}
 						if (1 == flag)
 						{
-							sprintf(data, "%s", SVR_RSP_REG_ERR_REP);
-							send(cfd, SVR_RSP_REG_ERR_REP, 1, 0);
+							send_flag_msg(cfd, SVR_RSP_REG_ERR_REP);
 							break;
 						}
-						strncpy(ui[g_user_id].username, buffer + 3, username_len);
-						ui[g_user_id].username[username_len] = '\0';
-						strncpy(ui[g_user_id].password, buffer + 3 + username_len, password_len);				
-						ui[g_user_id].password[password_len] = '\0';
-						ui[g_user_id].user_status = USER_STATUS_OFFLINE;
-						ui[g_user_id].friend_num = 0;
-						sprintf(data, "%s%d", SVR_RSP_REG_SUC, ui[g_user_id].userid);
+						memcpy(ui[uid1].username, buffer + 3, (int)buffer[1]);
+						ui[uid1].username[((int)buffer[1])] = '\0';
+						memcpy(ui[uid1].password, buffer + 3 + (int)buffer[1], (int)buffer[2]);			
+						ui[uid1].password[(int)buffer[2]] = '\0';
+						ui[uid1].user_status = USER_STATUS_OFFLINE;
+						ui[uid1].friend_num = 0;
+						data[0] = SVR_RSP_REG_SUC;
+						index = data + 1;
+						snprintf(register_tmp, CHAR_MAX, "%d", ui[uid1].userid);
+						length = strlen(register_tmp);
+						memcpy(index, register_tmp, length);
+						index += length;
+						data[index - data] = '\0';			
 						send(cfd, data, strlen(data), 0);
-						g_user_id++;
-						g_real_user_num = g_user_id;
 						break;
 					// add friend
 					case 0x03:
-						userid_len = (int)buffer[1];
-						friendID_len = (int)buffer[2];
-						strncpy(str_userid, buffer + 3, userid_len);
-						strncpy(str_friendid, buffer + 3 + userid_len, friendID_len);
-						str_userid[userid_len] = '\0';
-						str_friendid[friendID_len] = '\0';
-						userID = atoi(str_userid);
-						friendID = atoi(str_friendid);
+						memcpy(add_fri_tmp, buffer + 3, (int)buffer[1]);
+						add_fri_tmp[((int)buffer[1])] = '\0';
+						uid2 = atoi(add_fri_tmp);
+						memcpy(add_fri_tmp, buffer + 3 + (int)buffer[1], (int)buffer[2]);
+						add_fri_tmp[((int)buffer[2])] = '\0';			
+						friendID = atoi(add_fri_tmp);
 						// friendID bas been added
-						if (add_friend(userID, friendID) < 0)
+						if (add_friend(uid2, friendID) < 0)
 						{
-							sprintf(data, "%s", SVR_RSP_ADD_FRI_ERR_AGN);
-							send(cfd, data, 1, 0);
+							send_flag_msg(cfd, SVR_RSP_ADD_FRI_ERR_AGN);
 							break;
 						}
 						// friendID is not in memory database
-						else if (add_friend(userID, friendID) > 0)
+						else if (add_friend(uid2, friendID) > 0)
 						{
-							sprintf(data, "%s", SVR_RSP_ADD_FRI_ERR_NOT_EXI);
-							send(cfd, data, 1, 0);
+							send_flag_msg(cfd, SVR_RSP_ADD_FRI_ERR_NOT_EXI);
 							break;
 						}
 						// add friend success
 						else
 						{
-							sprintf(data, "%s", SVR_RSP_ADD_FRI_SUC);
-							send(cfd, data, 1, 0);
+							send_flag_msg(cfd, SVR_RSP_ADD_FRI_SUC);
 							break;
 						}
-					default:
 						break;
+					default:
+					{
+						close(cfd);
+						break;
+					}		
 				}
 			}
 			close(cfd);
