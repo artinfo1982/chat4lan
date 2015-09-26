@@ -1,8 +1,10 @@
 #! /usr/bin/python
-# encoding=utf-8
+# -*- coding: utf-8 -*-
 
 import wx
 import AddFriendDialog
+import Login
+import Constant
 
 class FriendList(wx.Frame):
     def __init__(self, parent):
@@ -23,16 +25,17 @@ class FriendList(wx.Frame):
 class Panel_Single(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        lc = wx.ListCtrl(self, size=(240, 410), style=wx.LC_REPORT)
-        lc.InsertColumn(0, "ID")
-        lc.InsertColumn(1, u"用户名")
-        lc.InsertColumn(2, u"状态")
-        lc.SetColumnWidth(0, 50)
-        lc.SetColumnWidth(1, 140)
-        lc.SetColumnWidth(2, -2)
-        lc.InsertStringItem(0, "0")
-        lc.SetStringItem(0, 1, u"陈栋")
-        lc.SetStringItem(0, 2, "ON")
+        lc = wx.ListCtrl(self, size=(233, 410), style=wx.LC_REPORT)
+        lc.InsertColumn(0, u"用户名")
+        lc.InsertColumn(1, u"状态")
+        lc.SetColumnWidth(0, 140)
+        lc.SetColumnWidth(1, -2)
+        for i in range(0, Login.FRIEND_NUM, 1):
+            lc.InsertStringItem(i, u'%s' % unicode(Login.FRIEND_NAME_ARRAY[i], 'utf-8'))
+            if Constant.FRI_ONLINE == Login.FRIEND_STATUS_ARRAY[i]:
+                lc.SetStringItem(i, 1, "ON")
+            elif Constant.FRI_OFFLINE == Login.FRIEND_STATUS_ARRAY[i]:
+                lc.SetStringItem(i, 1, "OFF")
 
         add_friend_button = wx.Button(self, label=u'添加好友', pos=(80, 420))
 
