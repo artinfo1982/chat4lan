@@ -174,8 +174,6 @@ int main(int argc,char *argv[])
     	servAddr.sin_addr.s_addr = inet_addr(argv[1]);
     	servAddr.sin_port = htons((unsigned short)atoi(argv[2]));	
 
-	int username_len, userid_len, password_len, friendID_len;
-	char username[CHAR_MAX], password[CHAR_MAX], str_userid[CHAR_MAX], str_friendid[CHAR_MAX];
 	char login_tmp[CHAR_MAX], register_tmp[CHAR_MAX], add_fri_tmp[CHAR_MAX];
 	char * index = NULL;
 	int userID, uid1, uid2, friendID, length;
