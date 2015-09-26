@@ -8,10 +8,15 @@ import Dialog
 import Constant
 import Register
 import FriendList
+import struct
 
 SERVER_IP = ""
 SERVER_PORT = ""
 USERID = ""
+
+FRIEND_NUM = 0
+FRIEND_NAME_ARRAY = {}
+FRIEND_STATUS_ARRAY = {}
 
 # 初始登录对话框
 class Login(wx.Frame):
@@ -67,6 +72,9 @@ class Login(wx.Frame):
         global SERVER_IP
         global SERVER_PORT
         global USERID
+        global FRIEND_NUM
+        global FRIEND_NAME_ARRAY
+        global FRIEND_STATUS_ARRAY
         SERVER_IP = self.server_ip_edit.GetValue()
         SERVER_PORT = self.server_port_edit.GetValue()
         USERID = self.userid_edit.GetValue()
@@ -124,6 +132,17 @@ class Login(wx.Frame):
                     dialog.Centre()
                     dialog.Show()
                 elif Constant.LON_REQ_SUC_RSP == rsp[0]:
+                    # 获取好友总数
+                    FRIEND_NUM = int(rsp[2:(2 + ord(rsp[1]))])
+                    index = ord(rsp[1]) + 2
+                    # 逐一解析并填充好友信息到字典数组备用
+                    for i in range(0, FRIEND_NUM, 1):
+                        length = ord(rsp[index])
+                        index += 1
+                        FRIEND_NAME_ARRAY[i] = rsp[index:(index + length)]
+                        index += length
+                        FRIEND_STATUS_ARRAY[i] = rsp[index]
+                        index += 1
                     friend_list = FriendList.FriendList(None)
                     friend_list.Centre()
                     friend_list.Show()
