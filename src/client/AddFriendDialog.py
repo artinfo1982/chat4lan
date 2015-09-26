@@ -61,10 +61,12 @@ class AddFriendDialog(wx.Frame):
                 str(friendID)
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
                 sock.connect((Login.SERVER_IP, int(Login.SERVER_PORT)))
                 sock.send(send_data)
                 rsp = sock.recv(1024)
             except Exception, e:
+                self.isSuccess = False
                 dialog = Dialog.Dialog(None, u"错误", e.message, 200, 150, 30, 60)
                 dialog.Centre()
                 dialog.Show()
