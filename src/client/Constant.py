@@ -28,3 +28,7 @@ ADD_FRI_REQ_SUC_RSP = '\x03'
 SVR_RSP_ADD_FRI_ERR_NOT_EXI = '\x85'
 # server response when client add friend but already added, 1000 0110(\x86)
 SVR_RSP_ADD_FRI_ERR_AGN = '\x86'
+
+# send and recv msg:
+# client send msg and server send to other success
+SEND_RECV_REQ_SUC_RSP = '\x04'
