@@ -32,8 +32,8 @@ b)失败 flag(1)，示例：'\x85'
 
 4.点对点单聊
 客户端请求：
-flag(1), selfID_len(1), friendID_len(1), msg_len(1), selfID(?), friendID(?), msg(?)
-示例：'\x04', '\x01', '\x02', '\x06', "2", "33", "huawei"
+flag(1), friendID_len(1), msg_len(1), friendID(?), msg(?)
+示例：'\x04', '\x01', '\x06', "2", "huawei"
 服务器响应：
 flag(1)
 示例：'\x04'
