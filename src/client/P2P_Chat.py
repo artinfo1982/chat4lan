@@ -48,10 +48,8 @@ class P2P_Chat(wx.Frame):
         rsp = None
         msg = self.msg_send.GetValue().encode('utf-8')
         send_data = Constant.SEND_RECV_REQ_SUC_RSP + \
-            chr(len(str(Login.USERID))) + \
             chr(len(str(FriendList.P2P_ID))) + \
             chr(len(msg)) + \
-            str(Login.USERID) + \
             str(FriendList.P2P_ID) + \
             msg
         self.msg_send.Clear()
