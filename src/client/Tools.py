@@ -1,6 +1,8 @@
 #! /usr/bin/python
 # encoding=utf-8
 
+import socket
+
 # 校验IP格式的合法性
 def ipChecker(ip_str):
     # 使用“.”分割输入的IP字符串
@@ -48,3 +50,17 @@ def idChecker(user_id):
         return False
     else:
         return True
+
+# 校验本地端口是否可用
+def port_is_free(port):
+    port = int(port)
+    s = socket.socket()
+    s.settimeout(0.5)
+    try:
+        return s.connect_ex(('localhost', port)) != 0
+    finally:
+        s.close()
+
+# 获取本机IP
+def get_local_ip():
+    return socket.gethostbyname(socket.gethostname())
