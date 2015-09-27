@@ -12,13 +12,15 @@
 #include <errno.h>
 #include <limits.h>
 
-#define MAX_USER_NUMBER 		CHAR_MAX
+#define MAX_USER_NUMBER 			CHAR_MAX
 // login success
-#define SVR_RSP_LON_SUC 			'\x01'	// 0000 0001
+#define SVR_RSP_LON_SUC 				'\x01'	// 0000 0001
 // register success
 #define SVR_RSP_REG_SUC 				'\x02'	// 0000 0010
 // add friend success
 #define SVR_RSP_ADD_FRI_SUC			'\x03'	// 0000 0011
+// send and recv msg
+#define SEND_RECV_MSG				'\x04'	// 0000 0100
 // register users more than max user number
 #define SVR_RSP_REG_ERR_MAX_USR 	'\x81'	// 1000 0001
 // the same user register twice
@@ -43,6 +45,8 @@ typedef struct _user_info
 	int		friend_num;
 	int		friend_list [MAX_USER_NUMBER];
 	char 	user_status;
+	char		local_ip [16];
+	int		local_port;
 }user_info;
 
 //global user id, start from 0
@@ -174,9 +178,9 @@ int main(int argc,char *argv[])
     	servAddr.sin_addr.s_addr = inet_addr(argv[1]);
     	servAddr.sin_port = htons((unsigned short)atoi(argv[2]));	
 
-	char login_tmp[CHAR_MAX], register_tmp[CHAR_MAX], add_fri_tmp[CHAR_MAX];
+	char login_tmp[CHAR_MAX], register_tmp[CHAR_MAX], add_fri_tmp[CHAR_MAX], msg_tmp[CHAR_MAX];
 	char * index = NULL;
-	int userID, uid1, uid2, friendID, length;
+	int userID, uid1, uid2, uid3, friendID, length;
 
 	g_user_id = 0;
 	memset(&ui, 0x0, sizeof(ui));
@@ -250,11 +254,11 @@ int main(int argc,char *argv[])
 					//login
 					case 0x01:
 						// get userid
-						memcpy(login_tmp, buffer + 3, (int)buffer[1]);
+						memcpy(login_tmp, buffer + 5, (int)buffer[1]);
 						login_tmp[((int)buffer[1])] = '\0';
 						userID= atoi(login_tmp);
 						// get password
-						memcpy(login_tmp, buffer + 3 + (int)buffer[1], (int)buffer[2]);
+						memcpy(login_tmp, buffer + 5 + (int)buffer[1], (int)buffer[2]);
 						login_tmp[((int)buffer[2])] = '\0';
 						// user not found in memory dataspace
 						if (authentication(userID, login_tmp) > 0)
@@ -271,8 +275,21 @@ int main(int argc,char *argv[])
 						// login success
 						else
 						{
+							// get local ip
+							memcpy(ui[userID].local_ip, 
+								buffer + 5 + (int)buffer[1] + (int)buffer[2], 
+								(int)buffer[3]);
+							ui[userID].local_ip[((int)buffer[3])] = '\0';
+							// get local port
+							memcpy(login_tmp, 
+								buffer + 5 + (int)buffer[1] + (int)buffer[2] + (int)buffer[3], 
+								(int)buffer[4]);
+							login_tmp[((int)buffer[4])] = '\0';
+							ui[userID].local_port = atoi(login_tmp);
+							// mark user online
 							ui[userID].user_status = USER_STATUS_ONLINE;
 							data[0] = SVR_RSP_LON_SUC;
+							// query friend list of this user
 							snprintf(login_tmp, CHAR_MAX, "%d", ui[userID].friend_num);
 							length = strlen(login_tmp);
 							data[1] = length;
@@ -370,6 +387,13 @@ int main(int argc,char *argv[])
 							send_flag_msg(cfd, SVR_RSP_ADD_FRI_SUC);
 							break;
 						}
+						break;
+					// send and recv msg
+					case 0x04:
+						memcpy(msg_tmp, buffer + 3, (int)buffer[1]);
+						msg_tmp[((int)buffer[1])] = '\0';
+						uid3 = atoi(msg_tmp);
+						send_flag_msg(cfd, SEND_RECV_MSG);
 						break;
 					default:
 					{
