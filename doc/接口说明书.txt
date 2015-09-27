@@ -30,11 +30,17 @@ flag(1), selfID_len(1), friendID_len(1), selfID(?), friendID(?)
 a)成功 flag(1)，示例：'\x03'
 b)失败 flag(1)，示例：'\x85'
 
-4.点对点单聊
-客户端请求：
-flag(1), friendID_len(1), msg_len(1), friendID(?), msg(?)
-示例：'\x04', '\x01', '\x06', "2", "huawei"
-服务器响应：
+4.点对点单聊(客户端A-->服务器B-->客户端C，假设客户端A上的用户a向客户端C上的用户c发消息，a的id:0，c的id:1)
+客户端A-->服务器B：
+flag(1), selfID_len(1), friendID_len(1), msg_len(1), selfID(?), friendID(?), msg(?)
+示例：'\x04', '\x01', '\x01', '\x06', "0", "1", "huawei"
+服务器B-->客户端A：
+flag(1)
+示例：'\x04'
+服务器B-->客户端C：
+flag(1), senderID_len(1), msg_len(1), senderID(?), msg(?)
+示例：'\x04', '\x01', '\x06', "0", "huawei"
+客户端C-->服务器B：
 flag(1)
 示例：'\x04'
 
