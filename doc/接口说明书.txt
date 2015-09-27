@@ -15,8 +15,8 @@ b)失败 flag(1)，示例：'\x81'
 
 2.登录
 客户端请求：
-flag(1), userid_len(1), password_len(1), userid(?), password(?)
-示例：'\x01', '\x03', '\x06', "100", "huawei"
+flag(1), userid_len(1), password_len(1), local_ip_len(1), local_port_len(1), userid(?), password(?), local_ip(?), local_port(?)
+示例：'\x01', '\x03', '\x06', '\x0C', '\x05', "100", "huawei", "192.168.3.12", "60000"
 服务器响应：
 a)成功 flag(1), friNum_len(1), friNum(?), [fri1ID_len(1), fri1ID(?), fri1Name_len(1), fri1Name(?), fri1Status(1), fri2ID_len(1), fri2ID(?), fri2Name_len(1), fri2Name(?), fri2Status(1)......]
 示例：'\x01', '\x01', "2", '\x01', "2", '\x01', "a", '\xF0', '\x02', "33", '\x02', "bc", '\xFF'
