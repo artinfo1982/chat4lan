@@ -8,10 +8,12 @@ import Dialog
 import Constant
 import Register
 import FriendList
-import struct
+import ChangeLocalPort
 
 SERVER_IP = ""
 SERVER_PORT = ""
+LOCAL_IP = ""
+LOCAL_PORT_DEFAULT = "60000"
 USERID = ""
 
 FRIEND_NUM = 0
@@ -72,6 +74,8 @@ class Login(wx.Frame):
         # 将服务器信息和用户信息存入全局变量
         global SERVER_IP
         global SERVER_PORT
+        global LOCAL_IP
+        global LOCAL_PORT_DEFAULT
         global USERID
         global FRIEND_NUM
         global FRIEND_NAME_ARRAY
@@ -103,12 +107,22 @@ class Login(wx.Frame):
             dialog = Dialog.Dialog(None, u"错误", u"用户ID不合法", 200, 150, 60, 60)
             dialog.Centre()
             dialog.Show()
+        # 校验本地端口是否可用，若不可用，则更换一个
+        elif not Tools.port_is_free(LOCAL_PORT_DEFAULT):
+            dialog = ChangeLocalPort.ChangeLocalPort(None)
+            dialog.Centre()
+            dialog.Show()
         else:
+            LOCAL_IP = Tools.get_local_ip()
             send_data = Constant.LON_REQ_SUC_RSP + \
                 chr(len(str(USERID))) + \
                 chr(len(password.encode('utf-8'))) + \
+                chr(len(LOCAL_IP.encode('utf-8'))) + \
+                chr(len(LOCAL_PORT_DEFAULT.encode('utf-8'))) + \
                 str(USERID) + \
-                password.encode('utf-8')
+                password.encode('utf-8') + \
+                LOCAL_IP.encode('utf-8') + \
+                str(LOCAL_PORT_DEFAULT)
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(10)
