@@ -52,12 +52,12 @@ def idChecker(user_id):
         return True
 
 # 校验本地端口是否可用
-def port_is_free(port):
+def port_is_free(ip, port):
     port = int(port)
     s = socket.socket()
     s.settimeout(0.5)
     try:
-        return s.connect_ex(('localhost', port)) != 0
+        return s.connect_ex((ip, port)) != 0
     finally:
         s.close()
 
