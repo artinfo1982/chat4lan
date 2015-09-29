@@ -3,17 +3,17 @@
 
 import wx
 import socket
+import os
 import Tools
 import Dialog
 import Constant
 import Register
 import FriendList
-import ChangeLocalPort
+import MsgRecver
 
 SERVER_IP = ""
 SERVER_PORT = ""
-LOCAL_IP = ""
-LOCAL_PORT_DEFAULT = "60000"
+LOCAL_PORT = ""
 USERID = ""
 
 FRIEND_NUM = 0
@@ -21,11 +21,14 @@ FRIEND_ID_ARRAY = {}
 FRIEND_NAME_ARRAY = {}
 FRIEND_STATUS_ARRAY = {}
 
+isParamOK = False
+
 # 初始登录对话框
 class Login(wx.Frame):
 
     server_ip_edit = None
     server_port_edit = None
+    local_port_edit = None
     userid_edit = None
     password_edit = None
     isSuccess = True
@@ -48,13 +51,18 @@ class Login(wx.Frame):
         self.server_ip_edit.SetInsertionPoint(0)
 
         # 服务器端口
-        wx.StaticText(login_panel, label=u"服务器端口：", pos=(50, 65))
-        self.server_port_edit = wx.TextCtrl(login_panel, pos=(130, 60))
+        wx.StaticText(login_panel, label=u"服务器端口：", pos=(50, 55))
+        self.server_port_edit = wx.TextCtrl(login_panel, pos=(130, 50))
         self.server_port_edit.SetInsertionPoint(0)
 
+        # 本地监听端口
+        wx.StaticText(login_panel, label=u"本地端口：", pos=(50, 85))
+        self.local_port_edit = wx.TextCtrl(login_panel, pos=(130, 80))
+        self.local_port_edit.SetInsertionPoint(0)
+
         # 用户ID
-        wx.StaticText(login_panel, label=u"用户ID：", pos=(50, 105))
-        self.userid_edit = wx.TextCtrl(login_panel, pos=(130, 100))
+        wx.StaticText(login_panel, label=u"用户ID：", pos=(50, 115))
+        self.userid_edit = wx.TextCtrl(login_panel, pos=(130, 110))
         self.userid_edit.SetInsertionPoint(0)
 
         # 用户密码
@@ -68,20 +76,24 @@ class Login(wx.Frame):
         # 绑定按钮事件响应函数
         self.Bind(wx.EVT_BUTTON, self.OnLogin, login_confirm_button)
         self.Bind(wx.EVT_BUTTON, self.OnRegister, login_register_button)
-        pass
+
+        # 绑定关闭事件
+        self.Bind(wx.EVT_CLOSE, self.On_Close)
 
     def OnLogin(self, event):
         # 将服务器信息和用户信息存入全局变量
         global SERVER_IP
         global SERVER_PORT
-        global LOCAL_IP
-        global LOCAL_PORT_DEFAULT
+        global LOCAL_PORT
         global USERID
         global FRIEND_NUM
         global FRIEND_NAME_ARRAY
         global FRIEND_STATUS_ARRAY
+        global isParamOK
+
         SERVER_IP = self.server_ip_edit.GetValue()
         SERVER_PORT = self.server_port_edit.GetValue()
+        LOCAL_PORT = self.local_port_edit.GetValue()
         USERID = self.userid_edit.GetValue()
         password = self.password_edit.GetValue()
         sock = None
@@ -108,21 +120,21 @@ class Login(wx.Frame):
             dialog.Centre()
             dialog.Show()
         # 校验本地端口是否可用，若不可用，则更换一个
-        elif not Tools.port_is_free(LOCAL_PORT_DEFAULT):
-            dialog = ChangeLocalPort.ChangeLocalPort(None)
+        elif not Tools.port_is_free(Tools.get_local_ip(), LOCAL_PORT):
+            dialog = Dialog.Dialog(None, u"错误", u"本地端口被占用", 200, 150, 60, 60)
             dialog.Centre()
             dialog.Show()
         else:
-            LOCAL_IP = Tools.get_local_ip()
+            isParamOK = True
             send_data = Constant.LON_REQ_SUC_RSP + \
                 chr(len(str(USERID))) + \
                 chr(len(password.encode('utf-8'))) + \
-                chr(len(LOCAL_IP.encode('utf-8'))) + \
-                chr(len(LOCAL_PORT_DEFAULT.encode('utf-8'))) + \
+                chr(len(MsgRecver.LOCAL_IP.encode('utf-8'))) + \
+                chr(len(LOCAL_PORT.encode('utf-8'))) + \
                 str(USERID) + \
                 password.encode('utf-8') + \
-                LOCAL_IP.encode('utf-8') + \
-                str(LOCAL_PORT_DEFAULT)
+                MsgRecver.LOCAL_IP.encode('utf-8') + \
+                str(LOCAL_PORT)
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(10)
@@ -136,7 +148,7 @@ class Login(wx.Frame):
                 dialog.Show()
             finally:
                 sock.close()
-            self.Close()
+            self.Destroy()
 
             if self.isSuccess:
                 if Constant.SVR_RSP_LON_ERR_REP == rsp[0]:
@@ -175,3 +187,6 @@ class Login(wx.Frame):
         register_frame = Register.Register(None)
         register_frame.Centre()
         register_frame.Show()
+
+    def On_Close(self, event):
+        os._exit(0)
