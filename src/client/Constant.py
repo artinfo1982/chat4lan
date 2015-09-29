@@ -30,5 +30,7 @@ SVR_RSP_ADD_FRI_ERR_NOT_EXI = '\x85'
 SVR_RSP_ADD_FRI_ERR_AGN = '\x86'
 
 # send and recv msg:
-# client send msg and server send to other success
+# client send msg and server send to other success both use 0000 0100(\x04)
 SEND_RECV_REQ_SUC_RSP = '\x04'
+# server send msg to friend(s) failed, 1000 0111(\x87)
+SVR_SEND_MSG_FAIL = '\x87'
