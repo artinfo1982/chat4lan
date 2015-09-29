@@ -8,13 +8,17 @@ import Constant
 import Login
 import Dialog
 
+MSG_RECV = None
+
 class P2P_Chat(wx.Frame):
 
-    msg_recv = None
     msg_send = None
     isSuccess = True
 
     def __init__(self, parent):
+
+        global MSG_RECV
+
         wx.Frame.__init__(self, parent,
                           title=u'%s' % FriendList.P2P_NAME,
                           size=(500, 500),
@@ -25,12 +29,12 @@ class P2P_Chat(wx.Frame):
                                 | wx.CLOSE_BOX
                                 | wx.CLIP_CHILDREN)
         p2p_panel = wx.Panel(self)
-        self.msg_recv = wx.TextCtrl(p2p_panel, size=(450, 300), style=wx.TE_READONLY)
-        self.msg_recv.SetBackgroundColour(wx.Colour(192, 220, 192))
+        MSG_RECV = wx.TextCtrl(p2p_panel, size=(450, 300), style=wx.TE_READONLY)
+        MSG_RECV.SetBackgroundColour(wx.Colour(192, 220, 192))
         self.msg_send = wx.TextCtrl(p2p_panel, size=(450, 100), style=wx.TE_PROCESS_ENTER)
         self.msg_send.SetBackgroundColour(wx.Colour(192, 220, 192))
         vbox = wx.BoxSizer(wx.VERTICAL)
-        vbox.Add(self.msg_recv,
+        vbox.Add(MSG_RECV,
                  proportion=0,
                  flag=wx.UP | wx.LEFT | wx.RIGHT | wx.EXPAND,
                  border=5)
@@ -48,11 +52,12 @@ class P2P_Chat(wx.Frame):
         rsp = None
         msg = self.msg_send.GetValue().encode('utf-8')
         send_data = Constant.SEND_RECV_REQ_SUC_RSP + \
+            chr(len(str(Login.USERID))) + \
             chr(len(str(FriendList.P2P_ID))) + \
             chr(len(msg)) + \
+            str(Login.USERID) + \
             str(FriendList.P2P_ID) + \
             msg
-        self.msg_send.Clear()
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((Login.SERVER_IP, int(Login.SERVER_PORT)))
@@ -68,7 +73,11 @@ class P2P_Chat(wx.Frame):
 
         if self.isSuccess:
             if Constant.SEND_RECV_REQ_SUC_RSP == rsp[0]:
-                print "OK"
+                self.msg_send.Clear()
+            else:
+                dialog = Dialog.Dialog(None, u"错误", u"消息发送失败", 200, 150, 30, 60)
+                dialog.Centre()
+                dialog.Show()
 
 
 class Panel_Single(wx.Panel):
