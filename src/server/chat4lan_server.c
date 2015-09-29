@@ -13,6 +13,7 @@
 #include <limits.h>
 
 #define MAX_USER_NUMBER 			CHAR_MAX
+#define MAX_STORE_RESEND_MSG		8192
 // login success
 #define SVR_RSP_LON_SUC 				'\x01'	// 0000 0001
 // register success
@@ -33,6 +34,8 @@
 #define SVR_RSP_ADD_FRI_ERR_NOT_EXI	'\x85'	// 1000 0101
 // friend is already added
 #define SVR_RSP_ADD_FRI_ERR_AGN		'\x86'	// 1000 0110
+// server send msg to friend failed
+#define SVR_SEND_MSG_FAIL			'\x87'	// 1000 0111
 
 #define USER_STATUS_ONLINE			'\xF0'	// 1111 0000
 #define USER_STATUS_OFFLINE			'\xFF'	// 1111 1111
@@ -49,10 +52,22 @@ typedef struct _user_info
 	int		local_port;
 }user_info;
 
+// msg send failed need to be resended when user online again
+typedef struct _send_failed_msg
+{
+	int		userid;
+	int		friendid;
+	char		msg[1024];
+}send_failed_msg;
+
 //global user id, start from 0
-int g_user_id;
-int g_real_user_num;
-user_info ui[MAX_USER_NUMBER];
+int					g_user_id;
+int					g_real_user_num;
+int					g_send_failed_index;
+user_info				ui[MAX_USER_NUMBER];
+send_failed_msg		sfm[MAX_STORE_RESEND_MSG];
+struct sockaddr_in		friAddr[MAX_USER_NUMBER];
+
 
 int userid_generator()
 {
@@ -123,6 +138,40 @@ void send_flag_msg(int sock, char flag)
 	close(sock);
 }
 
+int send_p2p_chat_msg(int userid, char * msg, int size)
+{
+	int sfd = -1;
+	if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		return 1;
+	if (connect(sfd, (struct sockaddr *)&friAddr[userid], sizeof(struct sockaddr)) < 0)
+	{
+		close(sfd);
+		return 1;
+	}
+	if (send(sfd, msg, size, 0) < size)
+	{
+		close(sfd);
+		return 1;
+	}		
+	else
+	{
+		close(sfd);
+		return 0;
+	}		
+}
+
+int put_into_send_failed_msg_stack(int fromID, int toID, char * msg, int size)
+{
+	if (g_send_failed_index > MAX_STORE_RESEND_MSG)
+		return 1;
+	sfm[g_send_failed_index].userid = fromID;
+	sfm[g_send_failed_index].friendid = toID;
+	memcpy(sfm[g_send_failed_index].msg, msg, size);
+	sfm[g_send_failed_index].msg[size] = '\0';
+	g_send_failed_index ++;
+	return 0;
+}
+
 int main(int argc,char *argv[])
 {
 	if (argc < 3)
@@ -165,12 +214,12 @@ int main(int argc,char *argv[])
 	}
 	close(fd);
 
-	int sfd, cfd, efd, flag, rep, nfds, i, j;
+	int sfd, cfd, efd, flag, rep, nfds, i, j, res;
 	char buffer[1024], data[1024];
     	struct epoll_event sev,cev, events[256];
 	struct sockaddr_in servAddr;
 	struct sockaddr_in cliAddr;
-	
+
     	memset(&servAddr, 0, sizeof(servAddr));
 	memset(&cliAddr, 0, sizeof(cliAddr));
 	socklen_t addrlen = sizeof(cliAddr);
@@ -180,10 +229,14 @@ int main(int argc,char *argv[])
 
 	char login_tmp[CHAR_MAX], register_tmp[CHAR_MAX], add_fri_tmp[CHAR_MAX], msg_tmp[CHAR_MAX];
 	char * index = NULL;
-	int userID, uid1, uid2, uid3, friendID, length;
+	int userID, uid1, uid2, uid3, uid4, friendID, length;
 
 	g_user_id = 0;
+	g_real_user_num = 0;
+	g_send_failed_index = 0;
 	memset(&ui, 0x0, sizeof(ui));
+	memset(&sfm, 0x0, sizeof(sfm));
+	memset(&friAddr, 0x0, sizeof(friAddr));
 	
 	if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
@@ -261,13 +314,14 @@ int main(int argc,char *argv[])
 						memcpy(login_tmp, buffer + 5 + (int)buffer[1], (int)buffer[2]);
 						login_tmp[((int)buffer[2])] = '\0';
 						// user not found in memory dataspace
-						if (authentication(userID, login_tmp) > 0)
+						res = authentication(userID, login_tmp);
+						if (res > 0)
 						{
 							send_flag_msg(cfd, SVR_RSP_LON_ERR_NOT_EXI);
 							break;
 						}
 						// authentication failed
-						else if (authentication(userID, login_tmp) < 0)
+						else if (res < 0)
 						{
 							send_flag_msg(cfd, SVR_RSP_LON_ERR_REP);
 							break;
@@ -279,7 +333,7 @@ int main(int argc,char *argv[])
 							memcpy(ui[userID].local_ip, 
 								buffer + 5 + (int)buffer[1] + (int)buffer[2], 
 								(int)buffer[3]);
-							ui[userID].local_ip[((int)buffer[3])] = '\0';
+							ui[userID].local_ip[((int)buffer[3])] = '\0';	
 							// get local port
 							memcpy(login_tmp, 
 								buffer + 5 + (int)buffer[1] + (int)buffer[2] + (int)buffer[3], 
@@ -318,6 +372,9 @@ int main(int argc,char *argv[])
 							}
 							data[index - data] = '\0';
 							send(cfd, data, strlen(data), 0);
+							friAddr[userID].sin_family = AF_INET;
+							friAddr[userID].sin_addr.s_addr = inet_addr(ui[userID].local_ip);
+							friAddr[userID].sin_port = htons((unsigned short)ui[userID].local_port);	
 							break;
 						}
 						break;
@@ -370,13 +427,14 @@ int main(int argc,char *argv[])
 						add_fri_tmp[((int)buffer[2])] = '\0';			
 						friendID = atoi(add_fri_tmp);
 						// friendID bas been added
-						if (add_friend(uid2, friendID) < 0)
+						res = add_friend(uid2, friendID);
+						if (res < 0)
 						{
 							send_flag_msg(cfd, SVR_RSP_ADD_FRI_ERR_AGN);
 							break;
 						}
 						// friendID is not in memory database
-						else if (add_friend(uid2, friendID) > 0)
+						else if (res > 0)
 						{
 							send_flag_msg(cfd, SVR_RSP_ADD_FRI_ERR_NOT_EXI);
 							break;
@@ -390,9 +448,34 @@ int main(int argc,char *argv[])
 						break;
 					// send and recv msg
 					case 0x04:
-						memcpy(msg_tmp, buffer + 3, (int)buffer[1]);
+						// get sender userid
+						memcpy(msg_tmp, buffer + 4, (int)buffer[1]);
 						msg_tmp[((int)buffer[1])] = '\0';
 						uid3 = atoi(msg_tmp);
+						// get friend userid
+						memcpy(msg_tmp, buffer + 4 + (int)buffer[1], (int)buffer[2]);
+						msg_tmp[((int)buffer[2])] = '\0';
+						uid4 = atoi(msg_tmp);
+						// make msg prepare to send to friend
+						data[0] = SEND_RECV_MSG;
+						data[1] = buffer[1];
+						data[2] = buffer[3];
+						index = data + 3;
+						memcpy(index, buffer + 4, (int)buffer[1]); // copy sender userid
+						index += (int)buffer[1];
+						memcpy(index, 
+							buffer + 4 + (int)buffer[1] + (int)buffer[2], 
+							(int)buffer[3]);
+						index += (int)buffer[3];
+						data[index - data] = '\0';
+						res = send_p2p_chat_msg(uid4, data, strlen(data));
+						if (0 != res)
+						{
+							put_into_send_failed_msg_stack(uid3, uid4, data, sizeof(data));
+							send_flag_msg(cfd, SVR_SEND_MSG_FAIL);
+							break;
+						}
+						// after server transfer msg to friend, should reply ok to sender
 						send_flag_msg(cfd, SEND_RECV_MSG);
 						break;
 					default:
