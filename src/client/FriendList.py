@@ -2,7 +2,8 @@
 # encoding=utf-8
 
 import wx
-import AddFriendDialog
+import os
+import AddFriend
 import Login
 import Constant
 import P2P_Chat
@@ -24,6 +25,12 @@ class FriendList(wx.Frame):
         notebook = wx.Notebook(self)
         notebook.AddPage(Panel_Single(notebook), u"好友列表")
         notebook.AddPage(Panel_Multi(notebook), u"群组")
+
+        # 绑定关闭事件
+        self.Bind(wx.EVT_CLOSE, self.On_Close)
+
+    def On_Close(self, event):
+        os._exit(0)
 
 
 class Panel_Single(wx.Panel):
@@ -54,7 +61,7 @@ class Panel_Single(wx.Panel):
         pass
 
     def On_Add_Friend(self, event):
-        dialog = AddFriendDialog.AddFriendDialog(None)
+        dialog = AddFriend.AddFriend(None)
         dialog.Centre()
         dialog.Show()
 
