@@ -9,12 +9,13 @@ import Dialog
 import Constant
 import Register
 import FriendList
-import MsgRecver
+import P2P_Group_Chat
 
 SERVER_IP = ""
 SERVER_PORT = ""
 LOCAL_PORT = ""
 USERID = ""
+USERNAME = ""
 
 FRIEND_NUM = 0
 FRIEND_ID_ARRAY = {}
@@ -86,6 +87,7 @@ class Login(wx.Frame):
         global SERVER_PORT
         global LOCAL_PORT
         global USERID
+        global USERNAME
         global FRIEND_NUM
         global FRIEND_NAME_ARRAY
         global FRIEND_STATUS_ARRAY
@@ -129,11 +131,11 @@ class Login(wx.Frame):
             send_data = Constant.LON_REQ_SUC_RSP + \
                 chr(len(str(USERID))) + \
                 chr(len(password.encode('utf-8'))) + \
-                chr(len(MsgRecver.LOCAL_IP.encode('utf-8'))) + \
+                chr(len(P2P_Group_Chat.LOCAL_IP.encode('utf-8'))) + \
                 chr(len(LOCAL_PORT.encode('utf-8'))) + \
                 str(USERID) + \
                 password.encode('utf-8') + \
-                MsgRecver.LOCAL_IP.encode('utf-8') + \
+                P2P_Group_Chat.LOCAL_IP.encode('utf-8') + \
                 str(LOCAL_PORT)
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -160,9 +162,14 @@ class Login(wx.Frame):
                     dialog.Centre()
                     dialog.Show()
                 elif Constant.LON_REQ_SUC_RSP == rsp[0]:
-                    # 获取好友总数
-                    FRIEND_NUM = int(rsp[2:(2 + ord(rsp[1]))])
+                    # 获取自身的用户名
+                    USERNAME = str(rsp[2:(2 + ord(rsp[1]))]).decode('utf-8')
                     index = ord(rsp[1]) + 2
+                    # 获取好友总数
+                    length = ord(rsp[index])
+                    index += 1
+                    FRIEND_NUM = int(rsp[index:(index + length)])
+                    index += length
                     # 逐一解析并填充好友信息到字典数组备用
                     for i in range(0, FRIEND_NUM, 1):
                         length = ord(rsp[index])
