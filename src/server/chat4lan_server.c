@@ -343,11 +343,18 @@ int main(int argc,char *argv[])
 							// mark user online
 							ui[userID].user_status = USER_STATUS_ONLINE;
 							data[0] = SVR_RSP_LON_SUC;
-							// query friend list of this user
-							snprintf(login_tmp, CHAR_MAX, "%d", ui[userID].friend_num);
+							// query username
+							snprintf(login_tmp, CHAR_MAX, "%s", ui[userID].username);
 							length = strlen(login_tmp);
 							data[1] = length;
 							index = data + 2;
+							memcpy(index, login_tmp, length);
+							index += length;
+							// query friend list of this user
+							snprintf(login_tmp, CHAR_MAX, "%d", ui[userID].friend_num);
+							length = strlen(login_tmp);
+							data[index - data] = length;
+							index ++;
 							memcpy(index, login_tmp, length);
 							index += length;
 							for (j = 0; j < ui[userID].friend_num; j++)
