@@ -4,7 +4,7 @@
 import wx
 import threading
 import Login
-import MsgRecver
+import P2P_Group_Chat
 
 class GUI(threading.Thread):
     def run(self):
@@ -17,7 +17,7 @@ class GUI(threading.Thread):
 def main():
     t_gui = GUI()
     t_gui.start()
-    t_msgRecver = MsgRecver.MsgRecv()
+    t_msgRecver = P2P_Group_Chat.MsgRecv()
     t_msgRecver.start()
 
 if __name__ == '__main__':
