@@ -6,7 +6,7 @@ import os
 import AddFriend
 import Login
 import Constant
-import P2P_Chat
+import P2P_Group_Chat
 
 P2P_ID = ""
 P2P_NAME = ""
@@ -68,14 +68,15 @@ class Panel_Single(wx.Panel):
     def On_Chat_P2P(self, event):
         global P2P_ID
         global P2P_NAME
+
         index = event.GetIndex()
         item1 = self.lc.GetItem(index, 0)
         item2 = self.lc.GetItem(index, 1)
         P2P_ID = item1.GetText()
         P2P_NAME = item2.GetText()
-        dialog = P2P_Chat.P2P_Chat(None)
-        dialog.Centre()
-        dialog.Show()
+        p2p_dialog = P2P_Group_Chat.P2P_Chat(None)
+        p2p_dialog.Centre()
+        p2p_dialog.Show()
 
 
 class Panel_Multi(wx.Panel):
