@@ -20,7 +20,8 @@ local_port(?)
 示例：'\x01', '\x03', '\x06', '\x0C', '\x05', "100", "huawei", "192.168.3.12", "60000"
 服务器响应：
 a)成功 flag(1), username_len(1), username(?), friNum_len(1), friNum(?), groupNum_len(1), groupNum(?), [fri1ID_len(1),
-fri1ID(?), fri1Name_len(1), fri1Name(?), fri1Status(1), fri2ID_len(1), fri2ID(?), fri2Name_len(1), fri2Name(?), fri2Status(1), ......], [group1ID_len(1), group1ID(?), group1Status_len(1), group1Status(?), group2ID_len(1), 
+fri1ID(?), fri1Name_len(1), fri1Name(?), fri1Status(1), fri2ID_len(1), fri2ID(?), fri2Name_len(1), fri2Name(?),
+fri2Status(1), ......], [group1ID_len(1), group1ID(?), group1Status_len(1), group1Status(?), group2ID_len(1), 
 group2ID(?), group2Status_len(1), group2Status(?), ......]
 示例：'\x01', '\x01', "a", '\x01', "2", '\x01', "2", '\x01', "2", '\x01', "a", '\xF0', '\x02', "33", '\x02', "bc",
 '\xFF', '\x01', "5", '\x03', "3/8", '\x02', "10", '\x05', "11/44"
