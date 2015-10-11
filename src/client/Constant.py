@@ -29,8 +29,14 @@ SVR_RSP_ADD_FRI_ERR_NOT_EXI = '\x85'
 # server response when client add friend but already added, 1000 0110(\x86)
 SVR_RSP_ADD_FRI_ERR_AGN = '\x86'
 
-# send and recv msg:
-# client send msg and server send to other success both use 0000 0100(\x04)
-SEND_RECV_REQ_SUC_RSP = '\x04'
-# server send msg to friend(s) failed, 1000 0111(\x87)
-SVR_SEND_MSG_FAIL = '\x87'
+# send and recv msg p2p:
+# p2p client send msg and server send to other success both use 0000 0100(\x04)
+SEND_RECV_REQ_SUC_RSP_P2P = '\x04'
+# p2p server send msg to friend(s) failed, 1000 0111(\x87)
+SVR_SEND_MSG_FAIL_P2P = '\x87'
+
+# add group:
+# client add group and server response success both use 0000 0101(\x05)
+ADD_GRO_REQ_SUC_RSP = '\x05'
+# server response when client add group but already exist, 1000 1000(\x88)
+SVR_RSP_ADD_GRO_ERR_EXI = '\x88'
