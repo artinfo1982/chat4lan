@@ -13,6 +13,7 @@
 #include <limits.h>
 
 #define MAX_USER_NUMBER 			CHAR_MAX
+#define MAX_GROUP_NUMBER			CHAR_MAX
 #define MAX_STORE_RESEND_MSG		8192
 // login success
 #define SVR_RSP_LON_SUC 				'\x01'	// 0000 0001
@@ -20,8 +21,10 @@
 #define SVR_RSP_REG_SUC 				'\x02'	// 0000 0010
 // add friend success
 #define SVR_RSP_ADD_FRI_SUC			'\x03'	// 0000 0011
-// send and recv msg
-#define SEND_RECV_MSG				'\x04'	// 0000 0100
+// send and recv msg by p2p
+#define SEND_RECV_MSG_P2P			'\x04'	// 0000 0100
+// add group success
+#define SVR_RSP_ADD_GRO_SUC			'\x05'	// 0000 0101
 // register users more than max user number
 #define SVR_RSP_REG_ERR_MAX_USR 	'\x81'	// 1000 0001
 // the same user register twice
@@ -35,7 +38,9 @@
 // friend is already added
 #define SVR_RSP_ADD_FRI_ERR_AGN		'\x86'	// 1000 0110
 // server send msg to friend failed
-#define SVR_SEND_MSG_FAIL			'\x87'	// 1000 0111
+#define SVR_SEND_MSG_FAIL_P2P		'\x87'	// 1000 0111
+// group is already exist
+#define SVR_RSP_ADD_GRO_ERR_EXI		'\x88'	// 1000 1000
 
 #define USER_STATUS_ONLINE			'\xF0'	// 1111 0000
 #define USER_STATUS_OFFLINE			'\xFF'	// 1111 1111
@@ -47,6 +52,8 @@ typedef struct _user_info
 	char 	password [CHAR_MAX];
 	int		friend_num;
 	int		friend_list [MAX_USER_NUMBER];
+	int		group_num;
+	int		group_list [MAX_GROUP_NUMBER];
 	char 	user_status;
 	char		local_ip [16];
 	int		local_port;
@@ -60,16 +67,27 @@ typedef struct _send_failed_msg
 	char		msg[1024];
 }send_failed_msg;
 
-//global user id, start from 0
+typedef struct _group_info
+{
+	int		group_id;
+	char		group_name [CHAR_MAX];
+	int		friend_list [MAX_USER_NUMBER];
+	char		group_status [CHAR_MAX];
+}group_info;
+
+// global user id, start from 0
 int					g_user_id;
+// global group id, start from 0
+int					g_group_id;
 int					g_real_user_num;
 int					g_send_failed_index;
-user_info				ui[MAX_USER_NUMBER];
-send_failed_msg		sfm[MAX_STORE_RESEND_MSG];
-struct sockaddr_in		friAddr[MAX_USER_NUMBER];
+user_info				ui [MAX_USER_NUMBER];
+group_info			gi [MAX_GROUP_NUMBER];
+send_failed_msg		sfm [MAX_STORE_RESEND_MSG];
+struct sockaddr_in		friAddr [MAX_USER_NUMBER];
 
 
-int userid_generator()
+int userID_generator()
 {
 	int userid;
 	if (g_user_id > MAX_USER_NUMBER)
@@ -79,6 +97,18 @@ int userid_generator()
 		userid = g_user_id ++;
 		g_real_user_num = g_user_id;
 		return userid;
+	}
+}
+
+int groupid_generator()
+{
+	int groupid;
+	if (g_group_id > MAX_GROUP_NUMBER)
+		return -1;
+	else
+	{
+		groupid = g_group_id ++;
+		return groupid;
 	}
 }
 
@@ -232,9 +262,11 @@ int main(int argc,char *argv[])
 	int userID, uid1, uid2, uid3, uid4, friendID, length;
 
 	g_user_id = 0;
+	g_group_id = 0;
 	g_real_user_num = 0;
 	g_send_failed_index = 0;
 	memset(&ui, 0x0, sizeof(ui));
+	memset(&gi, 0x0, sizeof(gi));
 	memset(&sfm, 0x0, sizeof(sfm));
 	memset(&friAddr, 0x0, sizeof(friAddr));
 	
@@ -350,13 +382,21 @@ int main(int argc,char *argv[])
 							index = data + 2;
 							memcpy(index, login_tmp, length);
 							index += length;
-							// query friend list of this user
+							// query friend number of this user
 							snprintf(login_tmp, CHAR_MAX, "%d", ui[userID].friend_num);
 							length = strlen(login_tmp);
 							data[index - data] = length;
 							index ++;
 							memcpy(index, login_tmp, length);
 							index += length;
+							// query group number of this user
+							snprintf(login_tmp, CHAR_MAX, "%d", ui[userID].group_num);
+							length = strlen(login_tmp);
+							data[index - data] = length;
+							index ++;
+							memcpy(index, login_tmp, length);
+							index += length;
+							// query friend list of this user
 							for (j = 0; j < ui[userID].friend_num; j++)
 							{
 								// get friend userid
@@ -377,6 +417,31 @@ int main(int argc,char *argv[])
 								data[index - data] = ui[(ui[userID].friend_list[j])].user_status;
 								index ++;
 							}
+							// query group list of this user
+							for (j = 0; j < ui[userID].group_num; j++)
+							{
+								// get group id
+								snprintf(login_tmp, CHAR_MAX, "%d", gi[(ui[userID].group_list[j])].group_id);
+								length = strlen(login_tmp);
+								data[index - data] = length;
+								index ++;
+								memcpy(index, login_tmp, length);
+								index += length;
+								// get group name
+								snprintf(login_tmp, CHAR_MAX, "%s", gi[(ui[userID].group_list[j])].group_name);
+								length = strlen(login_tmp);
+								data[index - data] = length;
+								index ++;
+								memcpy(index, login_tmp, length);
+								index += length;
+								// get group status
+								snprintf(login_tmp, CHAR_MAX, "%s", gi[(ui[userID].group_list[j])].group_status);
+								length = strlen(login_tmp);
+								data[index - data] = length;
+								index ++;
+								memcpy(index, login_tmp, length);
+								index += length;
+							}
 							data[index - data] = '\0';
 							send(cfd, data, strlen(data), 0);
 							friAddr[userID].sin_family = AF_INET;
@@ -388,7 +453,7 @@ int main(int argc,char *argv[])
 					//register
 					case 0x02:
 						// more than max user
-						if ((uid1 = userid_generator()) < 0)
+						if ((uid1 = userID_generator()) < 0)
 						{
 							send_flag_msg(cfd, SVR_RSP_REG_ERR_MAX_USR);
 							break;
@@ -453,7 +518,7 @@ int main(int argc,char *argv[])
 							break;
 						}
 						break;
-					// send and recv msg
+					// send and recv msg by p2p
 					case 0x04:
 						// get sender userid
 						memcpy(msg_tmp, buffer + 4, (int)buffer[1]);
@@ -464,7 +529,7 @@ int main(int argc,char *argv[])
 						msg_tmp[((int)buffer[2])] = '\0';
 						uid4 = atoi(msg_tmp);
 						// make msg prepare to send to friend
-						data[0] = SEND_RECV_MSG;
+						data[0] = SEND_RECV_MSG_P2P;
 						data[1] = buffer[1];
 						data[2] = buffer[3];
 						index = data + 3;
@@ -475,15 +540,29 @@ int main(int argc,char *argv[])
 							(int)buffer[3]);
 						index += (int)buffer[3];
 						data[index - data] = '\0';
-						res = send_p2p_chat_msg(uid4, data, strlen(data));
-						if (0 != res)
+						// query friend status, only online can send msg
+						if (USER_STATUS_ONLINE == ui[uid4].user_status)
+						{
+							res = send_p2p_chat_msg(uid4, data, strlen(data));
+							// friend online, but send msg over socket failed
+							if (0 != res)
+							{
+								put_into_send_failed_msg_stack(uid3, uid4, data, sizeof(data));
+								send_flag_msg(cfd, SVR_SEND_MSG_FAIL_P2P);
+								break;
+							}
+						}
+						else
 						{
 							put_into_send_failed_msg_stack(uid3, uid4, data, sizeof(data));
-							send_flag_msg(cfd, SVR_SEND_MSG_FAIL);
+							send_flag_msg(cfd, SVR_SEND_MSG_FAIL_P2P);
 							break;
 						}
 						// after server transfer msg to friend, should reply ok to sender
-						send_flag_msg(cfd, SEND_RECV_MSG);
+						send_flag_msg(cfd, SEND_RECV_MSG_P2P);
+						break;
+					// add group
+					case 0x05:
 						break;
 					default:
 					{
