@@ -22,6 +22,11 @@ FRIEND_ID_ARRAY = {}
 FRIEND_NAME_ARRAY = {}
 FRIEND_STATUS_ARRAY = {}
 
+GROUP_NUM = 0
+GROUP_ID_ARRAY = {}
+GROUP_NAME_ARRAY = {}
+GROUP_STATUS_ARRAY = {}
+
 isParamOK = False
 
 # 初始登录对话框
@@ -89,8 +94,13 @@ class Login(wx.Frame):
         global USERID
         global USERNAME
         global FRIEND_NUM
+        global FRIEND_ID_ARRAY
         global FRIEND_NAME_ARRAY
         global FRIEND_STATUS_ARRAY
+        global GROUP_NUM
+        global GROUP_ID_ARRAY
+        global GROUP_NAME_ARRAY
+        global GROUP_STATUS_ARRAY
         global isParamOK
 
         SERVER_IP = self.server_ip_edit.GetValue()
@@ -162,13 +172,18 @@ class Login(wx.Frame):
                     dialog.Centre()
                     dialog.Show()
                 elif Constant.LON_REQ_SUC_RSP == rsp[0]:
-                    # 获取自身的用户名
+                    # 解析自身的用户名
                     USERNAME = str(rsp[2:(2 + ord(rsp[1]))]).decode('utf-8')
                     index = ord(rsp[1]) + 2
-                    # 获取好友总数
+                    # 解析好友总数
                     length = ord(rsp[index])
                     index += 1
                     FRIEND_NUM = int(rsp[index:(index + length)])
+                    index += length
+                    # 解析群总数
+                    length = ord(rsp[index])
+                    index += 1
+                    GROUP_NUM = int(rsp[index:(index + length)])
                     index += length
                     # 逐一解析并填充好友信息到字典数组备用
                     for i in range(0, FRIEND_NUM, 1):
@@ -181,6 +196,18 @@ class Login(wx.Frame):
                         FRIEND_NAME_ARRAY[i] = rsp[index:(index + length)]
                         index += length
                         FRIEND_STATUS_ARRAY[i] = rsp[index]
+                        index += 1
+                    # 逐一解析并填充群信息到字典数组备用
+                    for i in range(0, GROUP_NUM, 1):
+                        length = ord(rsp[index])
+                        index += 1
+                        GROUP_ID_ARRAY[i] = rsp[index:(index + length)]
+                        index += length
+                        length = ord(rsp[index])
+                        index += 1
+                        GROUP_NAME_ARRAY[i] = rsp[index:(index + length)]
+                        index += length
+                        GROUP_STATUS_ARRAY[i] = rsp[index]
                         index += 1
                     friend_list = FriendList.FriendList(None)
                     friend_list.Centre()
