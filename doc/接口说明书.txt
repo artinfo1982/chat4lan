@@ -51,11 +51,12 @@ flag(1)
 
 5.创建群
 客户端请求：
-flag(1), selfID_len(1), groupID_len(1), selfID(?), groupID(?)
-示例：'\x05', '\x02', '\x03', "20", "100"
+flag(1), selfID_len(1), selfID(?), groupName_len(1), groupName(?), memberNum_len(1), memberNum(?), [mem1ID_len(1),
+mem1ID(?), mem2ID_len(1), mem2ID(?), ......]
+示例：'\x05', '\x02', "20", '\x03', "ABC", '\x01', "2", '\x01', "3", '\x02', "44"
 服务器响应：
-a)成功 flag(1)，示例：'\x03'
-b)失败 flag(1)，示例：'\x85'
+a)成功 flag(1)，groupID_len(1), groupID(?), 示例：'\x05', '\x02', "11"
+b)失败 flag(1)，示例：'\x88'
 
 
 三、附录
