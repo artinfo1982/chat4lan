@@ -40,7 +40,7 @@ class MsgRecv(threading.Thread):
             try:
                 connection.settimeout(10)
                 buf = connection.recv(1024)
-                if Constant.SEND_RECV_REQ_SUC_RSP == buf[0]:
+                if Constant.SEND_RECV_REQ_SUC_RSP_P2P == buf[0]:
                     senderID_len = ord(buf[1])
                     msg_len = ord(buf[2])
                     index = 3
@@ -104,7 +104,7 @@ class P2P_Chat(wx.Frame):
 
         rsp = None
         msg = self.msg_send.GetValue().encode('utf-8')
-        send_data = Constant.SEND_RECV_REQ_SUC_RSP + \
+        send_data = Constant.SEND_RECV_REQ_SUC_RSP_P2P + \
             chr(len(str(Login.USERID))) + \
             chr(len(str(FriendList.P2P_ID))) + \
             chr(len(msg)) + \
@@ -124,16 +124,16 @@ class P2P_Chat(wx.Frame):
         finally:
             sock.close()
 
+        # 消息已经成功发往服务器
         if self.isSuccess:
-            if Constant.SEND_RECV_REQ_SUC_RSP == rsp[0]:
-                self.msg_send.Clear()
-                MSG_RECV.AppendText(Login.USERNAME + "  "
-                                    + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
-                                    + str(msg).decode('utf-8') + "\n")
-            else:
-                dialog = Dialog.Dialog(None, u"错误", u"消息发送失败", 200, 150, 30, 60)
-                dialog.Centre()
-                dialog.Show()
+            self.msg_send.Clear()
+            MSG_RECV.AppendText(Login.USERNAME + "  "
+                                + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
+                                + str(msg).decode('utf-8') + "\n")
+        else:
+            dialog = Dialog.Dialog(None, u"错误", u"消息发送失败", 200, 150, 30, 60)
+            dialog.Centre()
+            dialog.Show()
 
 
 class Panel_Single(wx.Panel):
