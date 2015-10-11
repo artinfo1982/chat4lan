@@ -4,6 +4,7 @@
 import wx
 import os
 import AddFriend
+import AddGroup
 import Login
 import Constant
 import P2P_Group_Chat
@@ -15,7 +16,7 @@ class FriendList(wx.Frame):
     def __init__(self, parent):
         wx.Frame.__init__(self, parent,
                           title=u'局域网聊天',
-                          size=(250, 500),
+                          size=(270, 500),
                           style=wx.MINIMIZE_BOX
                                 | wx.RESIZE_BORDER
                                 | wx.SYSTEM_MENU
@@ -33,13 +34,14 @@ class FriendList(wx.Frame):
         os._exit(0)
 
 
+# 点对点聊天的面板
 class Panel_Single(wx.Panel):
 
     lc = None
 
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        self.lc = wx.ListCtrl(self, size=(233, 410), style=wx.LC_REPORT)
+        self.lc = wx.ListCtrl(self, size=(253, 410), style=wx.LC_REPORT)
         self.lc.InsertColumn(0, u"ID")
         self.lc.InsertColumn(1, u"用户名")
         self.lc.InsertColumn(2, u"状态")
@@ -79,7 +81,31 @@ class Panel_Single(wx.Panel):
         p2p_dialog.Show()
 
 
+# 群聊的面板
 class Panel_Multi(wx.Panel):
+
+    lc = None
+
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
+        self.lc = wx.ListCtrl(self, size=(253, 410), style=wx.LC_REPORT)
+        self.lc.InsertColumn(0, u"群ID")
+        self.lc.InsertColumn(1, u"群名称")
+        self.lc.InsertColumn(2, u"群状态")
+        self.lc.SetColumnWidth(0, 50)
+        self.lc.SetColumnWidth(1, 140)
+        self.lc.SetColumnWidth(2, -2)
+        for i in range(0, Login.GROUP_NUM, 1):
+            self.lc.InsertStringItem(i, u'%s' % unicode(Login.GROUP_ID_ARRAY[i], 'utf-8'))
+            self.lc.SetStringItem(i, 1, u'%s' % unicode(Login.GROUP_NAME_ARRAY[i], 'utf-8'))
+            self.lc.SetStringItem(i, 2, Login.GROUP_STATUS_ARRAY[i])
+
+        add_group_button = wx.Button(self, label=u'创建群', pos=(80, 420))
+
+        self.Bind(wx.EVT_BUTTON, self.On_Add_Group, add_group_button)
         pass
+
+    def On_Add_Group(self, event):
+        dialog = AddGroup.AddGroup(None)
+        dialog.Centre()
+        dialog.Show()
