@@ -60,6 +60,11 @@ a)成功 flag(1)，groupID_len(1), groupID(?), 示例：'\x05', '\x02', "11"
 b)失败 flag(1)，示例：'\x88'
 
 6.群聊
+客户端请求：
+flag(1), selfID_len(1), selfID(?), groupID_len(1), groupID(?), msgLen(1), msg(?)
+示例：'\x06', '\x01', "3", '\x02', "22", '\x06', "huawei"
+服务器响应：
+flag(1), 示例：'\x06'
 
 7.登出
 客户端请求：
