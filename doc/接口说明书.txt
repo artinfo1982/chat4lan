@@ -80,7 +80,7 @@ flag(1), selfID_len(1), selfID(?)
 a)成功：flag(1), 示例：'\x07'
 b)失败：flag(1), 示例：'\x8C'
 
-8.查询指定群组内的好友
+8.查询指定群组内的好友（用于客户端群聊右侧窗口展示本群组内所有成员名字）
 客户端请求：
 flag(1), selfID_len(1), groupID_len(1), selfID(?), groupID(?)
 示例：'\x08', '\x01', '\x01', "1", "1"
