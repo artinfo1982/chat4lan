@@ -1,4 +1,3 @@
-#! /usr/bin/python
 # encoding=utf-8
 
 import wx
@@ -25,7 +24,7 @@ FRIEND_STATUS_ARRAY = {}
 GROUP_NUM = 0
 GROUP_ID_ARRAY = {}
 GROUP_NAME_ARRAY = {}
-GROUP_STATUS_ARRAY = {}
+GROUP_MEMBERNUM_ARRAY = {}
 
 isParamOK = False
 
@@ -100,7 +99,7 @@ class Login(wx.Frame):
         global GROUP_NUM
         global GROUP_ID_ARRAY
         global GROUP_NAME_ARRAY
-        global GROUP_STATUS_ARRAY
+        global GROUP_MEMBERNUM_ARRAY
         global isParamOK
 
         SERVER_IP = self.server_ip_edit.GetValue()
@@ -138,7 +137,7 @@ class Login(wx.Frame):
             dialog.Show()
         else:
             isParamOK = True
-            send_data = Constant.LON_REQ_SUC_RSP + \
+            send_data = Constant.LON_IN_REQ_SUC_RSP + \
                 chr(len(str(USERID))) + \
                 chr(len(password.encode('utf-8'))) + \
                 chr(len(P2P_Group_Chat.LOCAL_IP.encode('utf-8'))) + \
@@ -155,7 +154,7 @@ class Login(wx.Frame):
                 rsp = sock.recv(1024)
             except Exception, e:
                 self.isSuccess = False
-                dialog = Dialog.Dialog(None, u"错误", e.message, 200, 150, 30, 60)
+                dialog = Dialog.Dialog(None, u"错误", u"服务器断连", 200, 150, 30, 60)
                 dialog.Centre()
                 dialog.Show()
             finally:
@@ -171,7 +170,15 @@ class Login(wx.Frame):
                     dialog = Dialog.Dialog(None, u"错误", u"用户不存在", 200, 150, 30, 60)
                     dialog.Centre()
                     dialog.Show()
-                elif Constant.LON_REQ_SUC_RSP == rsp[0]:
+                elif Constant.SVR_MYSQL_UNREACHABLE == rsp[0]:
+                    dialog = Dialog.Dialog(None, u"错误", u"后台数据库不可达", 200, 150, 20, 60)
+                    dialog.Centre()
+                    dialog.Show()
+                elif Constant.SVR_RSP_USR_LOG_IN_REP == rsp[0]:
+                    dialog = Dialog.Dialog(None, u"错误", u"该用户已经登录", 200, 150, 20, 60)
+                    dialog.Centre()
+                    dialog.Show()
+                elif Constant.LON_IN_REQ_SUC_RSP == rsp[0]:
                     # 解析自身的用户名
                     USERNAME = str(rsp[2:(2 + ord(rsp[1]))]).decode('utf-8')
                     index = ord(rsp[1]) + 2
@@ -207,8 +214,10 @@ class Login(wx.Frame):
                         index += 1
                         GROUP_NAME_ARRAY[i] = rsp[index:(index + length)]
                         index += length
-                        GROUP_STATUS_ARRAY[i] = rsp[index]
+                        length = ord(rsp[index])
                         index += 1
+                        GROUP_MEMBERNUM_ARRAY[i] = rsp[index:(index + length)]
+                        index += length
                     friend_list = FriendList.FriendList(None)
                     friend_list.Centre()
                     friend_list.Show()
