@@ -1,4 +1,3 @@
-#! /usr/bin/python
 # encoding=utf-8
 
 import wx
@@ -50,7 +49,7 @@ class AddFriend(wx.Frame):
             dialog.Show()
         # 自己不能加自己为好友
         elif Login.USERID == friendID:
-            dialog = Dialog.Dialog(None, u"错误", u"不允许自己添加自己为好友", 200, 150, 60, 60)
+            dialog = Dialog.Dialog(None, u"错误", u"不允许添加自己为好友", 200, 150, 40, 60)
             dialog.Centre()
             dialog.Show()
         else:
