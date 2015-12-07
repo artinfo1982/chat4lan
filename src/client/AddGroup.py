@@ -1,7 +1,7 @@
-#! /usr/bin/python
 # encoding=utf-8
 
 import wx
+import socket
 import Login
 import Dialog
 import Constant
@@ -12,6 +12,7 @@ class AddGroup(wx.Frame):
 
     groupName_edit = None
     check_list_box = None
+    isSuccess = True
 
     def __init__(self, parent):
         wx.Frame.__init__(self, parent,
@@ -66,6 +67,42 @@ class AddGroup(wx.Frame):
                 str(Login.USERID) + \
                 chr(len(groupName.encode('utf-8'))) + \
                 str(groupName.encode('utf-8')) + \
-                chr(int(memNum)) + \
+                chr(len(str(memNum))) + \
                 str(int(memNum)) + \
                 memberString
+
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            sock.connect((Login.SERVER_IP, int(Login.SERVER_PORT)))
+            sock.send(send_data)
+            rsp = sock.recv(64)
+        except Exception, e:
+            dialog = Dialog.Dialog(None, u"错误", e.message, 200, 150, 30, 60)
+            dialog.Centre()
+            dialog.Show()
+            self.isSuccess = False
+        finally:
+            sock.close()
+        self.Close()
+
+        if self.isSuccess:
+            if Constant.SVR_RSP_REG_ERR_MAX_GRO == rsp[0]:
+                dialog = Dialog.Dialog(None, u"错误", u"达到系统最大群数", 200, 150, 30, 60)
+                dialog.Centre()
+                dialog.Show()
+            elif Constant.SVR_RSP_ADD_GRO_ERR_EXI == rsp[0]:
+                dialog = Dialog.Dialog(None, u"错误", u"该群已经存在", 200, 150, 30, 60)
+                dialog.Centre()
+                dialog.Show()
+            elif Constant.ADD_GRO_REQ_SUC_RSP == rsp[0]:
+                length = ord(rsp[1])
+                index = 2
+                gid = int(rsp[index:(index + length)])
+                dialog = Dialog.Dialog(None, u"信息", u"创建群成功，群ID=%d" % gid, 200, 150, 30, 60)
+                dialog.Centre()
+                dialog.Show()
+            else:
+                dialog = Dialog.Dialog(None, u"错误", u"创建群收到无效响应", 200, 150, 30, 60)
+                dialog.Centre()
+                dialog.Show()
