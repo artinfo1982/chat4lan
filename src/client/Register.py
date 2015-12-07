@@ -1,4 +1,3 @@
-#! /usr/bin/python
 # encoding=utf-8
 
 import wx
@@ -102,7 +101,7 @@ class Register(wx.Frame):
                 self.isSuccess = False
             finally:
                 sock.close()
-            self.Close()
+            self.Destroy()
 
             if self.isSuccess:
                 if Constant.SVR_RSP_REG_ERR_MAX_USR == rsp[0]:
@@ -111,6 +110,10 @@ class Register(wx.Frame):
                     dialog.Show()
                 elif Constant.SVR_RSP_REG_ERR_REP == rsp[0]:
                     dialog = Dialog.Dialog(None, u"错误", u"该用户已注册", 200, 150, 30, 60)
+                    dialog.Centre()
+                    dialog.Show()
+                elif Constant.SVR_MYSQL_UNREACHABLE == rsp[0]:
+                    dialog = Dialog.Dialog(None, u"错误", u"后台数据库不可达", 200, 150, 30, 60)
                     dialog.Centre()
                     dialog.Show()
                 elif Constant.REG_REQ_SUC_RSP == rsp[0]:
