@@ -1,8 +1,11 @@
-//mysql db
+// mysql db
 #define MYSQL_USRNAME				"chat"
 #define MYSQL_USRPASS				"chat"
 #define MYSQL_DBNAME				"chatDB"
 #define MYSQL_DBPORT				3306
+
+// heartbeat interval (seconds)
+#define HEARTBEAT_INTERVAL			30
 
 #define MAX_USER_NUMBER 			CHAR_MAX
 #define MAX_GROUP_NUMBER			CHAR_MAX
@@ -24,6 +27,8 @@
 #define SVR_RSP_LON_OUT_SUC			'\x07'	// 0000 0111
 // query group member list
 #define GRO_MEM_LST_REQ_SUC_RSP		'\x08'	// 0000 1000
+// heartbeat between server and client
+#define HEART_BEAT_REQ_RSP			'\x09'	// 0000 1001
 //mysql is unreachable
 #define SVR_MYSQL_UNREACHABLE		'\x80'	// 1000 0000
 // register users more than max user number
