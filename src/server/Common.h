@@ -11,9 +11,20 @@
 #include <limits.h>
 #include <errno.h>
 
+typedef void (*mainServiceType)(FILE *, char *, char *);
+typedef void (*heartbeatServiceType)(FILE *, char *);
+
 void 
 setDaemon 
 (FILE * fp);
+
+void 
+createMainProcess 
+(FILE * fp, mainServiceType mst, char * ip, char * port);
+
+void 
+createHeartbeatProcess 
+(FILE * fp, heartbeatServiceType hst, char * ip);
 
 void 
 initServerAddr 
@@ -38,3 +49,7 @@ epollWait
 void 
 sendFlagMsg 
 (int sock, char flag);
+
+int 
+sendRecvHeartbeat 
+(int sock);
