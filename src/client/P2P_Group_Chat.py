@@ -52,8 +52,11 @@ class MsgRecv(threading.Thread):
                         MSG_RECV_P2P.AppendText(FriendList.P2P_NAME + "  "
                                                 + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
                                                 + str(SENDER_MSG).decode('utf-8'))
+                        connection.close()
                     else:
+                        connection.close()
                         pass
+
                 elif Constant.SEND_RECV_REQ_SUC_RSP_GRO == buf[0]:
                     groupID_len = ord(buf[1])
                     index = 2
@@ -69,25 +72,19 @@ class MsgRecv(threading.Thread):
                     MSG_RECV_GROUP.AppendText(str(SENDER_Name) + "  "
                                               + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
                                               + str(SENDER_MSG).decode('utf-8'))
-                # heartbeat reply
+                    connection.close()
                 elif Constant.CLI_SVR_HEART_BEAT == buf[0]:
-                    try:
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        sock.connect((Login.SERVER_IP, int(Login.SERVER_PORT)))
-                        sock.send(Constant.CLI_SVR_HEART_BEAT)
-                    except Exception, e:
-                        dialog = Dialog.Dialog(None, u"错误", e.message, 200, 150, 30, 60)
-                        dialog.Centre()
-                        dialog.Show()
-                    finally:
-                        sock.close()
+                    connection.send(Constant.CLI_SVR_HEART_BEAT)
+                    connection.close()
                 else:
                     connection.close()
                     continue
-            except Exception, e:
+            except:
+                connection.close()
                 continue
             finally:
-                connection.close()
+                if not connection:
+                    connection.close()
 
 
 class P2P_Chat(wx.Frame):
