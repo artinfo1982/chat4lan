@@ -79,7 +79,7 @@ loginHandler
 	if (0 != mysqlInsUpdDel(fp, dbIP, dbUserName, dbPass, dbName, dbPort, sql))
 	{
 		sendFlagMsg(sock, SVR_MYSQL_UNREACHABLE);
-		ERROR_LOG(fp, tv, tim, "login, mysql is unreachable when update usr_info table\n");
+		ERROR_LOG(fp, tv, tim, "login, mysql is unreachable when update group_info table\n");
 		return 1;
 	}
 	data[0] = SVR_RSP_LON_IN_SUC;
@@ -897,3 +897,111 @@ queryGroupMemberListHandler
 	send(sock, data, strlen(data), 0);
 	return 0;
 }
+
+void 
+heartbeatHandler 
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort)
+{
+	struct timeval tv;
+	struct tm tim;
+	char sql[512];
+	char buffer[128];
+	int rowsNum;
+	int i;
+	int usrID;
+	struct sockaddr_in addr;
+	int sfd = -1;
+	MYSQL_RES * res = NULL;
+	MYSQL_ROW row;
+
+	memset(&addr, 0, sizeof(struct sockaddr_in));
+    	addr.sin_family = AF_INET;
+
+	for (;;)
+	{
+		// query all online usr's network info
+		memcpy(sql, "select usr_id,usr_local_ip,usr_local_port from usr_info where usr_status='1'", 76);
+		sql[76] = '\0';
+		res = mysqlQueryGetRes(fp, dbIP, dbUserName, dbPass, dbName, dbPort, sql);
+		if ( ! res )
+		{
+			ERROR_LOG(fp, tv, tim, "internal error, query all online usr's network info return empty, sql=%s\n", sql);
+			sleep(10);
+			continue;
+		}
+		rowsNum = mysql_num_rows(res);
+		if (0 == rowsNum)
+		{
+			sleep(10);
+			continue;
+		}
+		// check each usr's heartbeat is alive or not
+		for (i=0; i<rowsNum; i++)
+		{
+			row = mysql_fetch_row(res);
+			usrID = atoi(row[0]);
+			addr.sin_addr.s_addr = inet_addr(row[1]);
+    			addr.sin_port = htons((unsigned short)atoi(row[2]));
+			if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+				continue;
+			if (connect(sfd, (struct sockaddr *)&addr, sizeof(struct sockaddr)) < 0)
+			{
+				close(sfd);
+				markUsrOnline2Offline(fp,dbIP, dbUserName, dbPass, dbName, dbPort, usrID);
+				WARN_LOG(fp, tv, tim, "usr seems offline, mark him/her offline force, usrID=[%d]\n", usrID);
+				continue;
+			}
+			if (0 != sendRecvHeartbeat(sfd))
+			{
+				markUsrOnline2Offline(fp,dbIP, dbUserName, dbPass, dbName, dbPort, usrID);
+				WARN_LOG(fp, tv, tim, "usr seems offline, mark him/her offline force, usrID=[%d]\n", usrID);
+				continue;
+			}
+		}
+		sleep(HEARTBEAT_INTERVAL);
+	}
+}
+
+void 
+markUsrOnline2Offline 
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int usrID)
+{
+	struct timeval tv;
+	struct tm tim;
+	char sql[512];
+	char temp[CHAR_MAX];
+
+	snprintf(temp, CHAR_MAX, "%d", usrID);
+	int usrIdLen = strlen(temp);
+
+	// check if this usr is really online
+	sprintf(sql, "%s%d%s", "select count(1) from usr_info where usr_id=", usrID, " and usr_status='1'");
+	sql[62 + usrIdLen] = '\0';
+	// online, update database
+	if (0 != mysqlQueryCount(fp, dbIP, dbUserName, dbPass, dbName, dbPort, sql))
+	{
+		// update usr_info
+		sprintf(sql, "%s%c%s%d", "update usr_info set usr_status=", USER_STATUS_OFFLINE, ",usr_local_ip='',usr_local_port=0 where usr_id=", usrID);
+		sql[79 + usrIdLen] = '\0';
+		if (0 != mysqlInsUpdDel(fp, dbIP, dbUserName, dbPass, dbName, dbPort, sql))
+		{
+			ERROR_LOG(fp, tv, tim, "markUsrOnline2Offline, mysql is unreachable when update usr_info table\n");
+			return;
+		}
+		// update group_info
+		sprintf(sql, "%s%d", "update group_info g,usr_group_info u set g.group_online_member_num=g.group_online_member_num-1 where u.group_id=g.group_id and u.usr_id=", usrID);
+		sql[136 + usrIdLen] = '\0';
+		if (0 != mysqlInsUpdDel(fp, dbIP, dbUserName, dbPass, dbName, dbPort, sql))
+		{
+			ERROR_LOG(fp, tv, tim, "markUsrOnline2Offline, mysql is unreachable when update group_info table\n");
+			return;
+		}
+		return;
+	}
+	// offline, do nothing
+	else
+	{
+		return;
+	}
+}
+
