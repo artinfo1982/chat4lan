@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "DbMysql.h"
 #include "Log.h"
+#include "Constants.h"
 
 void 
 setDaemon 
@@ -30,6 +31,43 @@ setDaemon
 	if (dup2(fd, STDERR_FILENO) == -1)
 		ERROR_LOG(fp, tv, tim, "dup2 stderr_fileno error, errInfo : %s\n", strerror(errno));
 	close(fd);
+	INFO_LOG(fp, tv, tim, "create daemon process successfully, daemon process pid=[%d], ppid=[1]\n", getpid());
+}
+
+void 
+createMainProcess 
+(FILE * fp, mainServiceType mst, char * ip, char * port)
+{
+	struct timeval tv;
+	struct tm tim;
+	switch (fork())
+	{
+		case -1:
+			ERROR_LOG(fp, tv, tim, "fork main service process failed, errInfo : %s\n", strerror(errno));
+		case 0:
+			INFO_LOG(fp, tv, tim, "create main service process successfully, main service process pid=[%d], ppid=[%d]\n", getpid(), getppid());
+			mst(fp, ip, port);
+		default:
+			break;
+	}
+}
+
+void 
+createHeartbeatProcess 
+(FILE * fp, heartbeatServiceType hst, char * ip)
+{
+	struct timeval tv;
+	struct tm tim;
+	switch (fork())
+	{
+		case -1:
+			ERROR_LOG(fp, tv, tim, "fork heartbeat service process failed, errInfo : %s\n", strerror(errno));
+		case 0:
+			INFO_LOG(fp, tv, tim, "create heartbeat service process successfully, heartbeat service process pid=[%d], ppid=[%d]\n", getpid(), getppid());
+			hst(fp, ip);
+		default:
+			break;
+	}
 }
 
 void 
@@ -131,4 +169,29 @@ sendFlagMsg
 	char * index = & flag;
 	send(sock, index, 1, 0);
 	close(sock);
+}
+
+int 
+sendRecvHeartbeat 
+(int sock)
+{
+	char data = (char)HEART_BEAT_REQ_RSP;
+	char buffer[2];
+	if (send(sock, &data, 1, 0) < 1)
+	{
+		close(sock);
+		return 1;
+	}
+	if (recv(sock, buffer, 1, 0) < 1)
+	{
+		close(sock);
+		return 1;
+	}
+	if (HEART_BEAT_REQ_RSP != buffer[0])
+	{
+		close(sock);
+		return 1;
+	}
+	close(sock);
+	return 0;
 }
