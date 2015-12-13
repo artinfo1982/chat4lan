@@ -228,6 +228,7 @@ class Login(wx.Frame):
 
     def OnRegister(self, event):
         register_frame = Register.Register(None)
+        register_frame.SetMaxSize((300, 250))
         register_frame.Centre()
         register_frame.Show()
 
