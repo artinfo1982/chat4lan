@@ -1,7 +1,9 @@
-chat4lan: Main.o Common.o DbMysql.o Service.o
-	gcc Main.o Common.o DbMysql.o Service.o -lmysqlclient -L /usr/lib/mysql/ -o chat4lan
-Main.o: Main.c Common.h DbMysql.h Log.h
+chat4lan: Main.o Common.o DbMysql.o Service.o ProcessFuncs.o
+	gcc Main.o Common.o DbMysql.o Service.o ProcessFuncs.o -lmysqlclient -L /usr/lib/mysql/ -o chat4lan
+Main.o: Main.c Common.h DbMysql.h Log.h ProcessFuncs.h
 	gcc -c Main.c
+ProcessFuncs.o: ProcessFuncs.c ProcessFuncs.h
+	gcc -c ProcessFuncs.c
 Common.o: Common.c Common.h Log.h
 	gcc -c Common.c
 Service.o: Service.c Service.h Log.h Constants.h
