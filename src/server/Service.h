@@ -39,3 +39,11 @@ logoutHandler
 int 
 queryGroupMemberListHandler 
 (FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer, char * data);
+
+void 
+heartbeatHandler 
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort);
+
+void 
+markUsrOnline2Offline 
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int usrID);
