@@ -87,9 +87,10 @@ class Panel_Single(wx.Panel):
         pass
 
     def On_Add_Friend(self, event):
-        dialog = AddFriend.AddFriend(None)
-        dialog.Centre()
-        dialog.Show()
+        addFriend = AddFriend.AddFriend(None)
+        addFriend.SetMaxSize((200, 150))
+        addFriend.Centre()
+        addFriend.Show()
 
     def On_Chat_P2P(self, event):
         global P2P_ID
@@ -101,6 +102,7 @@ class Panel_Single(wx.Panel):
         P2P_ID = item1.GetText()
         P2P_NAME = item2.GetText()
         p2p_dialog = P2P_Group_Chat.P2P_Chat(None, P2P_NAME)
+        # p2p_dialog.SetMaxSize((500, 500))
         p2p_dialog.Centre()
         p2p_dialog.Show()
 
@@ -132,9 +134,10 @@ class Panel_Multi(wx.Panel):
         pass
 
     def On_Add_Group(self, event):
-        dialog = AddGroup.AddGroup(None)
-        dialog.Centre()
-        dialog.Show()
+        addGroup = AddGroup.AddGroup(None)
+        addGroup.SetMaxSize((200, 400))
+        addGroup.Centre()
+        addGroup.Show()
 
     def On_Chat_Group(self, event):
         global GROUP_ID
