@@ -195,7 +195,7 @@ class Group_Chat(wx.Frame):
         gName = self.group_mem_list.AppendItem(root, u'群成员')
         # 逐个填充群聊右侧窗口中的群组成员的名字
         for i in range(0, FriendList.GROUP_MEM_NUM, 1):
-            self.group_mem_list.AppendItem(gName, FriendList.GROUP_MEM_NAME_ARRAY[i])
+            self.group_mem_list.AppendItem(gName, str(FriendList.GROUP_MEM_NAME_ARRAY[i]).decode('utf-8'))
         self.group_mem_list.ExpandAll()
 
         # 使初始输入光标出现在文本输入框
