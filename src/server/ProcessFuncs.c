@@ -7,9 +7,9 @@
 void 
 mainService (FILE * fp, char * ip, char * port)
 {
-	int sfd, cfd, efd, flag, nfds, rep, i, j, res;
+	int sfd, cfd, efd, nfds, i;
 	char data[1024], buffer[1024];
-    	struct epoll_event sev,cev, events[256];
+    	struct epoll_event sev, events[256];
 	struct sockaddr_in servAddr;
 	struct sockaddr_in cliAddr;
 	struct timeval tv;
@@ -53,7 +53,7 @@ mainService (FILE * fp, char * ip, char * port)
 					}
 					case 0x03:
 					{
-						addFriendHandler(fp,ip,MYSQL_USRNAME,MYSQL_USRPASS,MYSQL_DBNAME,MYSQL_DBPORT,cfd,buffer,data);
+						addFriendHandler(fp,ip,MYSQL_USRNAME,MYSQL_USRPASS,MYSQL_DBNAME,MYSQL_DBPORT,cfd,buffer);
 						break;
 					}
 					case 0x04:
@@ -73,7 +73,7 @@ mainService (FILE * fp, char * ip, char * port)
 					}
 					case 0x07:
 					{
-						logoutHandler(fp,ip,MYSQL_USRNAME,MYSQL_USRPASS,MYSQL_DBNAME,MYSQL_DBPORT,cfd,buffer,data);
+						logoutHandler(fp,ip,MYSQL_USRNAME,MYSQL_USRPASS,MYSQL_DBNAME,MYSQL_DBPORT,cfd,buffer);
 						break;
 					}
 					case 0x08:
