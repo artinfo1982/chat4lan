@@ -1,13 +1,6 @@
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
-
-CREATE SCHEMA IF NOT EXISTS `chatDB` DEFAULT CHARACTER SET latin1 ;
+CREATE SCHEMA IF NOT EXISTS `chatDB` DEFAULT CHARACTER SET utf8 ;
 USE `chatDB` ;
 
--- -----------------------------------------------------
--- Table `chatDB`.`usr_info`
--- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_info` (
   `usr_id` INT UNSIGNED NOT NULL AUTO_INCREMENT ,
   `usr_name` VARCHAR(64) BINARY NOT NULL ,
@@ -22,10 +15,6 @@ CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_info` (
   UNIQUE INDEX `usr_id_UNIQUE` (`usr_id` ASC) )
 ENGINE = InnoDB;
 
-
--- -----------------------------------------------------
--- Table `chatDB`.`usr_friend_info`
--- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_friend_info` (
   `index` INT NOT NULL AUTO_INCREMENT ,
   `usr_id` INT UNSIGNED NOT NULL ,
@@ -34,10 +23,6 @@ CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_friend_info` (
   UNIQUE INDEX `index_UNIQUE` (`index` ASC) )
 ENGINE = InnoDB;
 
-
--- -----------------------------------------------------
--- Table `chatDB`.`usr_group_info`
--- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_group_info` (
   `index` INT NOT NULL AUTO_INCREMENT ,
   `usr_id` INT UNSIGNED NOT NULL ,
@@ -46,10 +31,6 @@ CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_group_info` (
   UNIQUE INDEX `index_UNIQUE` (`index` ASC) )
 ENGINE = InnoDB;
 
-
--- -----------------------------------------------------
--- Table `chatDB`.`group_info`
--- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `chatDB`.`group_info` (
   `group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT ,
   `group_name` VARCHAR(64) BINARY NOT NULL ,
@@ -60,10 +41,6 @@ CREATE  TABLE IF NOT EXISTS `chatDB`.`group_info` (
   UNIQUE INDEX `group_name_UNIQUE` (`group_name` ASC) )
 ENGINE = InnoDB;
 
-
--- -----------------------------------------------------
--- Table `chatDB`.`usr_resend_info`
--- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_resend_info` (
   `index` INT NOT NULL AUTO_INCREMENT ,
   `msg_recv_time` DATETIME NOT NULL ,
@@ -73,9 +50,3 @@ CREATE  TABLE IF NOT EXISTS `chatDB`.`usr_resend_info` (
   PRIMARY KEY (`index`) ,
   UNIQUE INDEX `index_UNIQUE` (`index` ASC) )
 ENGINE = InnoDB;
-
-
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
