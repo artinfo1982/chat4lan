@@ -1,6 +1,7 @@
 #include "Service.h"
 #include "DbMysql.h"
 #include "Log.h"
+#include "Common.h"
 
 int 
 loginHandler 
@@ -261,7 +262,7 @@ registerHandler
 
 int 
 addFriendHandler 
-(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer, char * data)
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer)
 {
 	struct timeval tv;
 	struct tm tim;
@@ -413,7 +414,7 @@ p2pChatHandler
 			ERROR_LOG(fp, tv, tim, "p2pChat socket connect failed, usrID=%d, friendID=%d, friendIP=%s, friendPort=%s\n", usrID, friendID, friendIP, row[1]);
 			return 1;
 		}
-		if (send(sfd, data, strlen(data), 0) < strlen(data))
+		if (send(sfd, data, strlen(data), 0) < (int)strlen(data))
 		{
 			close(sfd);
 			sprintf(sql, "%s%d,%d,'%s')", "insert into usr_resend_info(msg_recv_time,usr_id,usr_friend_id,usr_resend_msg) values (now(),", usrID, friendID, data);
@@ -742,7 +743,7 @@ groupChatHandler
 			ERROR_LOG(fp, tv, tim, "groupChat socket connect failed, usrID=%d, friendID=%d, friendIP=%s, friendPort=%s\n", usrID, friendID, friendIP, row[2]);
 			return 1;
 		}
-		if (send(sfd, data, strlen(data), 0) < strlen(data))
+		if (send(sfd, data, strlen(data), 0) < (int)strlen(data))
 		{
 			close(sfd);
 			sprintf(sql, "%s%d,%d,'%s')", "insert into usr_resend_info(msg_recv_time,usr_id,usr_friend_id,usr_resend_msg) values (now(),", usrID, friendID, data);
@@ -794,7 +795,7 @@ groupChatHandler
 
 int 
 logoutHandler 
-(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer, char * data)
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer)
 {
 	struct timeval tv;
 	struct tm tim;
@@ -905,7 +906,6 @@ heartbeatHandler
 	struct timeval tv;
 	struct tm tim;
 	char sql[512];
-	char buffer[128];
 	int rowsNum;
 	int i;
 	int usrID;
