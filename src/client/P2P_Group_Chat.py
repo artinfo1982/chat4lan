@@ -51,7 +51,8 @@ class MsgRecv(threading.Thread):
                     if MSG_RECV_P2P is not None:
                         MSG_RECV_P2P.AppendText(FriendList.P2P_NAME + "  "
                                                 + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
-                                                + str(SENDER_MSG).decode('utf-8'))
+                                                + str(SENDER_MSG).decode('utf-8')
+                                                + "\n")
                         connection.close()
                     else:
                         connection.close()
@@ -71,7 +72,8 @@ class MsgRecv(threading.Thread):
                     SENDER_MSG = buf[index:(index + msg_len)]
                     MSG_RECV_GROUP.AppendText(str(SENDER_Name) + "  "
                                               + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
-                                              + str(SENDER_MSG).decode('utf-8'))
+                                              + str(SENDER_MSG).decode('utf-8')
+                                              + "\n")
                     connection.close()
                 elif Constant.CLI_SVR_HEART_BEAT == buf[0]:
                     connection.send(Constant.CLI_SVR_HEART_BEAT)
@@ -157,7 +159,8 @@ class P2P_Chat(wx.Frame):
             self.msg_send.Clear()
             MSG_RECV_P2P.AppendText(Login.USERNAME + "  "
                                     + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
-                                    + str(msg).decode('utf-8'))
+                                    + str(msg).decode('utf-8')
+                                    + "\n")
         else:
             dialog = Dialog.Dialog(None, u"错误", u"消息发送失败", 200, 150, 30, 60)
             dialog.Centre()
@@ -252,7 +255,8 @@ class Group_Chat(wx.Frame):
             self.msg_send.Clear()
             MSG_RECV_GROUP.AppendText(Login.USERNAME + "  "
                                       + time.strftime('%Y-%m-%d %X', time.localtime(time.time())) + "\n"
-                                      + str(msg).decode('utf-8'))
+                                      + str(msg).decode('utf-8')
+                                      + "\n")
         else:
             dialog = Dialog.Dialog(None, u"错误", u"消息发送失败", 200, 150, 30, 60)
             dialog.Centre()
