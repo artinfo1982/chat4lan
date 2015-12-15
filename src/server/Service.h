@@ -18,7 +18,7 @@ registerHandler
 
 int 
 addFriendHandler 
-(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer, char * data);
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer);
 
 int 
 p2pChatHandler 
@@ -34,7 +34,7 @@ groupChatHandler
 
 int 
 logoutHandler 
-(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer, char * data);
+(FILE * fp, char * dbIP, char * dbUserName, char * dbPass, char * dbName, int dbPort, int sock, char * buffer);
 
 int 
 queryGroupMemberListHandler 
