@@ -22,6 +22,12 @@ mysqlInsUpdDel
 		mysql_close(conn);
 		return -1;
 	}
+	if (mysql_real_query(conn, "set names utf8", 14))
+	{
+		ERROR_LOG(fp, tv, tim, "mysql set names utf8 failed\n");
+		mysql_close(conn);
+		return -1;
+	}
 	if (mysql_real_query(conn, sql, strlen(sql)))
 	{
 		ERROR_LOG(fp, tv, tim, "mysql insert, update or delete failed, sql=%s\n", sql);
@@ -55,6 +61,12 @@ mysqlQueryCount
 	if(! mysql_real_connect(conn, ip, username, password, dbName, dbPort, NULL, 0))
 	{
 		ERROR_LOG(fp, tv, tim, "connect to mysql failed\n");
+		mysql_close(conn);
+		return -1;
+	}
+	if (mysql_real_query(conn, "set names utf8", 14))
+	{
+		ERROR_LOG(fp, tv, tim, "mysql set names utf8 failed\n");
 		mysql_close(conn);
 		return -1;
 	}
@@ -108,6 +120,12 @@ mysqlQuerySimple
 		mysql_close(conn);
 		return -1;
 	}
+	if (mysql_real_query(conn, "set names utf8", 14))
+	{
+		ERROR_LOG(fp, tv, tim, "mysql set names utf8 failed\n");
+		mysql_close(conn);
+		return -1;
+	}
 	if (mysql_real_query(conn, sql, strlen(sql)))
 	{
 		ERROR_LOG(fp, tv, tim, "query from mysql failed, sql=%s\n", sql);
@@ -154,6 +172,12 @@ mysqlQueryGetRes
 	if(! mysql_real_connect(conn, ip, username, password, dbName, dbPort, NULL, 0))
 	{
 		ERROR_LOG(fp, tv, tim, "connect to mysql failed\n");
+		mysql_close(conn);
+		return NULL;
+	}
+	if (mysql_real_query(conn, "set names utf8", 14))
+	{
+		ERROR_LOG(fp, tv, tim, "mysql set names utf8 failed\n");
 		mysql_close(conn);
 		return NULL;
 	}
