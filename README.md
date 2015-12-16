@@ -52,7 +52,7 @@ default-character-set=utf8
 [client]   
 default-character-set=utf8   
 重启mysql / mariadb，以mysql为例：/etc/init.d/mysqld restart 或者 service mysqld restart。   
-2.如果安装mysql，需要安装mysql-server、mysql-client、mysql-devel。   
+2.如果采用rpm方式安装mysql，需要安装mysql-server、mysql-client、mysql-devel这三个rpm包；如果采用源码编译方式安装mysql，请自行解决动态库的链接，可以参考互联网上众多的相关帖子操作。   
 
 
 六、Changelog   
