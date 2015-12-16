@@ -30,11 +30,13 @@ Chat4lan 是一款局域网内的聊天工具。采用C/S+DB模式设计，客�
 
 
 四、安装及使用   
-1.在linux上安装mysql / mariadb，mysql的下载、安装及使用方法请访问其官方网站http://www.mysql.com，mariadb的下载、安装及使用方法请访问其官方网站http://mariadb.org（备注：如果安装mysql，需要安装mysql-server、mysql-client、mysql-devel）。   
+1.在linux上安装mysql / mariadb。   
+mysql的下载、安装及使用方法请访问其官方网站http://www.mysql.com。   
+mariadb的下载、安装及使用方法请访问其官方网站http://www.mariadb.org。   
 2.登录mysql / mariadb，创建一个名为chat的用户，用户密码为chat，创建一个名为chatDB的表空间，载入src/sql/createTables.sql，为mysql / mariadb创建表。   
 3.将src/server下的所有程序上传到linux的任意路径下，运行make，出现chat4lan的可执行文件后，运行./chat4lan ip port。   
 4.在windows客户机上安装python 2.7，配置环境变量。Python的下载、安装及配置请访问其官方网站https://www.python.org。   
-5.在windows客户机上安装py2exe，目的是将python脚本编译为windows环境下的可执行程序以及动态库（*.exe、*.dll），此后可以将这些可执行程序以及动态库打包至任意一台没有python的windows机器上运行。Py2exe的下载、安装请访问其官方网站http://www.py2exe.org。   
+5.在windows客户机上安装py2exe，目的是将python脚本编译为windows环境下的可执行程序以及动态库（\*.exe、\*.dll），此后可以将这些可执行程序以及动态库打包至任意一台没有python的windows机器上运行。Py2exe的下载、安装请访问其官方网站http://www.py2exe.org。   
 6.将src/client下的所有程序上传到windows客户机的任意路径下，在dos窗口进入源代码路径，运行python setup.py p2exe，在源代码路径下会出现一个名为dist的文件夹，其中的Main.exe即为最终的客户端可执行程序，双击即可运行。   
 
 
@@ -50,6 +52,7 @@ default-character-set=utf8
 [client]   
 default-character-set=utf8   
 重启mysql / mariadb，以mysql为例：/etc/init.d/mysqld restart 或者 service mysqld restart。   
+2.如果安装mysql，需要安装mysql-server、mysql-client、mysql-devel。   
 
 
 六、Changelog   
